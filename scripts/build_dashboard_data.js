@@ -6,6 +6,8 @@ const projectRoot = path.resolve(__dirname, '..');
 const accountsRoot = path.join(projectRoot, 'data', 'x', 'accounts');
 const outputPath = path.join(projectRoot, 'data', 'dashboard', 'dashboard-data.json');
 const notesDraftsRoot = path.join(projectRoot, 'notes', 'drafts');
+const notesBriefsRoot = path.join(projectRoot, 'notes', 'briefs');
+const notesBundlesRoot = path.join(projectRoot, 'notes', 'bundles');
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -31,7 +33,7 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
-function readNoteDrafts(dir) {
+function readJsonDir(dir) {
   if (!fs.existsSync(dir)) return [];
   return fs
     .readdirSync(dir)
@@ -39,6 +41,15 @@ function readNoteDrafts(dir) {
     .map((name) => readJson(path.join(dir, name)))
     .filter(Boolean)
     .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+}
+
+function indexById(items, keyResolver) {
+  const map = new Map();
+  for (const item of items) {
+    const key = keyResolver(item);
+    if (key) map.set(key, item);
+  }
+  return map;
 }
 
 function summarizeAccount(handle, posts) {
@@ -81,6 +92,49 @@ function summarizeAccount(handle, posts) {
   };
 }
 
+function buildNoteLineage(draft, briefsById, bundlesById) {
+  const briefId = draft.brief_id || draft.source_brief_id || null;
+  const bundleId = draft.bundle_id || draft.source_bundle_id || draft.source_selection_id || null;
+  const brief = briefId ? briefsById.get(briefId) || null : null;
+  const bundle = bundleId ? bundlesById.get(bundleId) || null : null;
+
+  return {
+    draft_id: draft.draft_id || draft.note_id || null,
+    note_id: draft.note_id || draft.draft_id || null,
+    brief_id: briefId,
+    bundle_id: bundleId,
+    theme: draft.theme,
+    style: draft.style,
+    angle: draft.angle,
+    title_options: draft.title_options || [],
+    cover_text_options: draft.cover_text_options || [],
+    body_markdown: draft.body_markdown || '',
+    hashtags: draft.hashtags || [],
+    source_posts: draft.source_posts || [],
+    status: draft.status || 'draft',
+    created_at: draft.created_at,
+    bundle_preview: bundle
+      ? {
+          core_post: bundle.bundle?.core_post
+            ? {
+                tweet_id: bundle.bundle.core_post.tweet_id,
+                account: bundle.bundle.core_post.account,
+                text: bundle.bundle.core_post.text,
+                url: bundle.bundle.core_post.url
+              }
+            : null,
+          supporting_count: (bundle.bundle?.supporting_posts || []).length
+        }
+      : null,
+    brief_preview: brief
+      ? {
+          core_angle: brief.core_angle,
+          final_takeaway: brief.narrative_structure?.final_takeaway || null
+        }
+      : null
+  };
+}
+
 function main() {
   const handles = fs.existsSync(accountsRoot)
     ? fs.readdirSync(accountsRoot).filter((name) => fs.statSync(path.join(accountsRoot, name)).isDirectory())
@@ -97,7 +151,11 @@ function main() {
   }
 
   const sortedPosts = allPosts.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  const noteDrafts = readNoteDrafts(notesDraftsRoot);
+  const noteDrafts = readJsonDir(notesDraftsRoot);
+  const noteBriefs = readJsonDir(notesBriefsRoot);
+  const noteBundles = readJsonDir(notesBundlesRoot);
+  const briefsById = indexById(noteBriefs, (item) => item.brief_id);
+  const bundlesById = indexById(noteBundles, (item) => item.bundle_id || item.selection_id);
   const originalsOnly = sortedPosts.filter((p) => p.content_type === 'original');
   const contentTypeCounts = sortedPosts.reduce((acc, post) => {
     const key = post.content_type || 'unknown';
@@ -127,19 +185,7 @@ function main() {
       viewed: topViewed
     },
     posts: sortedPosts,
-    notes: noteDrafts.map((note) => ({
-      note_id: note.note_id,
-      theme: note.theme,
-      style: note.style,
-      angle: note.angle,
-      title_options: note.title_options || [],
-      cover_text_options: note.cover_text_options || [],
-      body_markdown: note.body_markdown || '',
-      hashtags: note.hashtags || [],
-      source_posts: note.source_posts || [],
-      status: note.status || 'draft',
-      created_at: note.created_at
-    }))
+    notes: noteDrafts.map((draft) => buildNoteLineage(draft, briefsById, bundlesById))
   };
 
   ensureDir(path.dirname(outputPath));

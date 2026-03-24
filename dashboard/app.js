@@ -68,8 +68,11 @@ function renderNotes(notes) {
       <div class="note-card">
         <h3>${(note.title_options && note.title_options[0]) || '未命名草稿'}</h3>
         <div class="note-meta">主题：${note.theme || '-'} · 风格：${note.style || '-'} · 状态：${note.status || 'draft'} · 生成时间：${formatTime(note.created_at)}</div>
+        <div class="note-meta">Draft：${note.draft_id || '-'} · Brief：${note.brief_id || '-'} · Bundle：${note.bundle_id || '-'}</div>
         <div class="note-preview">${String(note.body_markdown || '').slice(0, 300).replace(/</g, '&lt;')}${String(note.body_markdown || '').length > 300 ? '...' : ''}</div>
         <div class="note-tags">来源帖子数：${(note.source_posts || []).length} · 标签：${(note.hashtags || []).join(' ')}</div>
+        ${note.bundle_preview ? `<div class="note-meta">Bundle预览：核心帖子 @${note.bundle_preview.core_post?.account || '-'} · supporting ${note.bundle_preview.supporting_count || 0} 条</div>` : ''}
+        ${note.brief_preview ? `<div class="note-meta">Brief预览：${(note.brief_preview.core_angle || '').replace(/</g, '&lt;').slice(0, 100)}</div>` : ''}
       </div>
     `)
     .join('');
