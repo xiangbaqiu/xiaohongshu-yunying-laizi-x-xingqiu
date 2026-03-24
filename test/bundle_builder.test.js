@@ -74,3 +74,35 @@ test('buildBundle returns a valid empty bundle on empty input', () => {
   assert.equal(bundle.bundle.core_post, null);
   assert.deepEqual(bundle.bundle.supporting_posts, []);
 });
+
+test('buildBundle skips empty text and supports top_k=1', () => {
+  const baseDir = makeTempProject();
+  writeJsonl(path.join(baseDir, 'data/x/accounts/sama/posts.jsonl'), [
+    {
+      tweet_id: '1', text: '', url: 'https://x.com/sama/1',
+      created_at: '2026-03-23T10:00:00.000Z', content_type: 'original', metrics: { like: 999, repost: 9, reply: 9, view: 9999 }
+    },
+    {
+      tweet_id: '2', text: 'AI', url: 'https://x.com/sama/2',
+      created_at: '2026-03-23T11:00:00.000Z', content_type: 'original', metrics: { like: 5, repost: 1, reply: 1, view: 50 }
+    }
+  ]);
+
+  const bundle = buildBundle({ baseDir, accounts: ['sama'], theme: 'AI', topK: 1, originalOnly: true });
+  assert.equal(bundle.bundle.core_post.tweet_id, '2');
+  assert.deepEqual(bundle.bundle.supporting_posts, []);
+});
+
+test('buildBundle works when only one account has usable data', () => {
+  const baseDir = makeTempProject();
+  writeJsonl(path.join(baseDir, 'data/x/accounts/sama/posts.jsonl'), [
+    {
+      tweet_id: '1', text: 'AI coding useful signal', url: 'https://x.com/sama/1',
+      created_at: '2026-03-23T10:00:00.000Z', content_type: 'original', metrics: { like: 10, repost: 2, reply: 1, view: 100 }
+    }
+  ]);
+
+  const bundle = buildBundle({ baseDir, accounts: ['sama', 'elonmusk'], theme: 'AI coding', topK: 3, originalOnly: true });
+  assert.ok(bundle.bundle.core_post);
+  assert.equal(bundle.bundle.core_post.account, 'sama');
+});

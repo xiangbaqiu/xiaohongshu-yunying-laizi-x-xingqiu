@@ -54,3 +54,28 @@ test('composeDraft handles bundles without supporting posts', () => {
   assert.deepEqual(draft.source_posts, []);
   assert.equal(draft.bundle_id, 'bundle-2');
 });
+
+test('composeDraft handles very short text without crashing', () => {
+  const draft = composeDraft({
+    brief: {
+      brief_id: 'brief-3',
+      theme: 'AI',
+      core_angle: 'short angle',
+      narrative_structure: {
+        hook_from_core_post: '短',
+        final_takeaway: '短总结'
+      }
+    },
+    bundle: {
+      bundle_id: 'bundle-3',
+      bundle: {
+        core_post: { tweet_id: '1', url: 'https://x.com/1', text: '短' },
+        supporting_posts: []
+      }
+    },
+    style: 'trend-analysis'
+  });
+
+  assert.ok(draft.body_markdown.length > 0);
+  assert.equal(draft.theme, 'AI');
+});

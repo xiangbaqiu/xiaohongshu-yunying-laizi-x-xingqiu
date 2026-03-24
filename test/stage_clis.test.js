@@ -34,6 +34,14 @@ function scaffoldProject(tempRoot) {
   }
 }
 
+function execJsonAllowFailure(command, args, cwd) {
+  try {
+    return JSON.parse(execFileSync(command, args, { cwd, encoding: 'utf8' }));
+  } catch (error) {
+    return JSON.parse(error.stdout);
+  }
+}
+
 test('stage CLIs can run bundle -> brief -> draft independently', () => {
   const tempRoot = makeTempProject();
   scaffoldProject(tempRoot);
@@ -69,4 +77,16 @@ test('stage CLIs can run bundle -> brief -> draft independently', () => {
   assert.equal(draftResult.ok, true);
   assert.ok(fs.existsSync(draftResult.paths.draftJsonPath));
   assert.ok(fs.existsSync(draftResult.paths.draftMdPath));
+});
+
+test('stage CLIs return usage errors when required args are missing', () => {
+  const tempRoot = makeTempProject();
+  scaffoldProject(tempRoot);
+
+  const briefResult = execJsonAllowFailure('node', [path.join(tempRoot, 'src', 'run_brief_builder.js')], tempRoot);
+  const draftResult = execJsonAllowFailure('node', [path.join(tempRoot, 'src', 'run_draft_composer.js')], tempRoot);
+  assert.equal(briefResult.ok, false);
+  assert.equal(draftResult.ok, false);
+  assert.match(briefResult.message, /Usage/);
+  assert.match(draftResult.message, /Usage/);
 });
