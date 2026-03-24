@@ -40,7 +40,6 @@ test('buildBundle picks a core post, dedupes, and respects top_k', () => {
   const bundle = buildBundle({ baseDir, accounts: ['sama', 'elonmusk'], theme: 'AI coding', topK: 2, originalOnly: true });
 
   assert.ok(bundle.bundle_id);
-  assert.equal(bundle.selection_id, bundle.bundle_id);
   assert.equal(bundle.bundle_strategy, 'one-core-plus-supporting-posts');
   assert.equal(bundle.bundle.supporting_posts.length, 1);
   assert.ok(bundle.bundle.core_post);

@@ -90,7 +90,6 @@ function buildBundle({ baseDir, accounts = [], theme, topK = 4, originalOnly = t
 
   return {
     bundle_id: bundleId,
-    selection_id: bundleId,
     theme,
     bundle_strategy: 'one-core-plus-supporting-posts',
     selection_strategy: {

@@ -95,12 +95,12 @@ function summarizeAccount(handle, posts) {
 function buildNoteLineage(draft, briefsById, bundlesById) {
   const briefId = draft.brief_id || draft.source_brief_id || null;
   const bundleId = draft.bundle_id || draft.source_bundle_id || draft.source_selection_id || null;
+  const draftId = draft.draft_id || draft.note_id || null;
   const brief = briefId ? briefsById.get(briefId) || null : null;
   const bundle = bundleId ? bundlesById.get(bundleId) || null : null;
 
   return {
-    draft_id: draft.draft_id || draft.note_id || null,
-    note_id: draft.note_id || draft.draft_id || null,
+    draft_id: draftId,
     brief_id: briefId,
     bundle_id: bundleId,
     theme: draft.theme,

@@ -162,7 +162,8 @@ node src/run_from_raw.js samples/raw/sama-raw.json sama
 - 默认以 `original` 内容作为主观察池
 - 草稿生成基于多帖 bundle，而不是单帖改写
 - `data/` 和 `notes/` 属于运行产物，默认不提交到仓库
-- 当前保留兼容字段过渡：`selection_id ↔ bundle_id`，`note_id ↔ draft_id`
+- 当前主链路已统一使用：`bundle_id` / `brief_id` / `draft_id`
+- 旧字段兼容仅保留在旧 artifacts 读取层，用于平滑迁移历史数据
 
 ## 文档入口
 

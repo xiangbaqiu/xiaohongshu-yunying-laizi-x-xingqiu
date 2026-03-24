@@ -169,13 +169,12 @@ node --test
 
 ### 当前仍保留的过渡策略
 
-- `selection_id ↔ bundle_id`
-- `note_id ↔ draft_id`
 - 旧模块文件暂保留兼容层
+- 历史 artifacts 读取时，仍兼容旧字段（如 `selection_id` / `note_id`）
 
 说明：
-- 这是为了避免一次性升级打断旧调用
-- 后续稳定后，可以进入“兼容层清理阶段”
+- 当前主链路字段已经统一到 `bundle_id / brief_id / draft_id`
+- 兼容主要保留在历史数据读取层，后续可继续收缩直至清理
 
 ---
 

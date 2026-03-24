@@ -35,7 +35,7 @@ function buildBrief(bundle) {
 
   return {
     brief_id: briefId,
-    bundle_id: bundle.bundle_id || bundle.selection_id || null,
+    bundle_id: bundle.bundle_id || null,
     theme: bundle.theme,
     core_angle: `围绕 ${bundle.theme}，从一条主观点出发，再用多条帖子补数据、对比和案例，整合成一篇更适合小红书阅读的笔记。`,
     narrative_structure: {

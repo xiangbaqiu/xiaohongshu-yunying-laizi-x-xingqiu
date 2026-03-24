@@ -43,12 +43,10 @@ function composeDraft({ brief, bundle, style = 'trend-analysis' }) {
 
   return {
     draft_id: draftId,
-    note_id: draftId,
     brief_id: brief.brief_id,
-    bundle_id: bundle.bundle_id || bundle.selection_id || null,
+    bundle_id: bundle.bundle_id || null,
     source_brief_id: brief.brief_id,
-    source_bundle_id: bundle.bundle_id || bundle.selection_id || null,
-    source_selection_id: bundle.bundle_id || bundle.selection_id || null,
+    source_bundle_id: bundle.bundle_id || null,
     theme: brief.theme,
     style,
     angle: brief.core_angle,

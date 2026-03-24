@@ -24,7 +24,6 @@ test('composeDraft emits valid draft structure and source posts', () => {
   });
 
   assert.ok(draft.draft_id);
-  assert.equal(draft.note_id, draft.draft_id);
   assert.equal(draft.brief_id, 'brief-1');
   assert.equal(draft.bundle_id, 'bundle-1');
   assert.ok(draft.body_markdown.includes('### 我自己的结论'));

@@ -105,9 +105,8 @@
   - `classifySupportRole`
   - `dedupeByTweetId`
   - `buildBundle`
-- 当前输出已包含：
+- 当前输出已统一为：
   - `bundle_id`
-  - 兼容字段 `selection_id`
 
 ---
 
@@ -420,17 +419,20 @@ notes/runs/<run_id>.json
 
 ## 任务 20：兼容旧字段，避免一次性全量破坏
 
-**状态：已完成（过渡中）**
+**状态：已完成（主链路已统一）**
 
-### 当前兼容字段
+### 当前策略
 
-- `selection_id ↔ bundle_id`
-- `note_id ↔ draft_id`
-- `source_selection_id ↔ source_bundle_id`
+- 主链路字段已统一到：
+  - `bundle_id`
+  - `brief_id`
+  - `draft_id`
+  - `source_bundle_id`
+- 旧字段兼容仅保留在历史 artifacts 读取层
 
 ### 后续动作
 
-- [ ] 等 dashboard / 外部调用完全切稳后再移除兼容字段
+- [ ] 继续收缩旧 artifacts 的兼容读取逻辑
 
 ---
 

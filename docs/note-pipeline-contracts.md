@@ -84,7 +84,6 @@ buildBundle({
 ```json
 {
   "bundle_id": "bundle-1742790000000",
-  "selection_id": "bundle-1742790000000",
   "theme": "AI coding",
   "bundle_strategy": "one-core-plus-supporting-posts",
   "selection_strategy": {
@@ -300,12 +299,10 @@ composeDraft({
 ```json
 {
   "draft_id": "draft-1742790000200",
-  "note_id": "draft-1742790000200",
   "brief_id": "brief-1742790000100",
   "bundle_id": "bundle-1742790000000",
   "source_brief_id": "brief-1742790000100",
   "source_bundle_id": "bundle-1742790000000",
-  "source_selection_id": "bundle-1742790000000",
   "theme": "AI coding",
   "style": "trend-analysis",
   "angle": "...",
@@ -476,7 +473,6 @@ notes/runs/<run_id>.json
   "notes": [
     {
       "draft_id": "draft-1742790000200",
-      "note_id": "draft-1742790000200",
       "brief_id": "brief-1742790000100",
       "bundle_id": "bundle-1742790000000",
       "theme": "AI coding",
@@ -579,3 +575,5 @@ node --test
 当前 contract 的目标是：
 
 **先把 note pipeline 的模块边界、数据结构、落盘协议、dashboard 消费关系彻底定清楚。**
+dashboard 消费关系彻底定清楚。**
+��边界、数据结构、落盘协议、dashboard 消费关系彻底定清楚。**
