@@ -25,6 +25,7 @@ function scaffoldProject(tempRoot) {
     'bundle_builder.js',
     'brief_builder.js',
     'draft_composer.js',
+    'review_status.js',
     'note_artifact_io.js',
     'run_bundle_builder.js',
     'run_brief_builder.js',

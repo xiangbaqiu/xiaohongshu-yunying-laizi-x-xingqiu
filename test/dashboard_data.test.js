@@ -33,6 +33,7 @@ test('build_dashboard_data degrades gracefully when brief/bundle are missing', (
     body_markdown: 'hello',
     source_posts: [],
     status: 'draft',
+    review_status: 'reviewing',
     created_at: '2026-03-24T10:00:00.000Z'
   });
 
@@ -40,6 +41,8 @@ test('build_dashboard_data degrades gracefully when brief/bundle are missing', (
   const dashboard = JSON.parse(fs.readFileSync(path.join(tempRoot, 'data', 'dashboard', 'dashboard-data.json'), 'utf8'));
   assert.equal(dashboard.notes.length, 1);
   assert.equal(dashboard.notes[0].draft_id, 'draft-1');
+  assert.equal(dashboard.notes[0].review_status, 'reviewing');
   assert.equal(dashboard.notes[0].brief_preview, null);
   assert.equal(dashboard.notes[0].bundle_preview, null);
+  assert.ok(dashboard.filters_meta.review_statuses.includes('reviewing'));
 });

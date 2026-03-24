@@ -54,7 +54,8 @@ function main() {
     draft = composeDraft({
       brief,
       bundle,
-      style: config.style
+      style: config.style,
+      reviewStatus: config.review_status || 'draft'
     });
   } catch (error) {
     return printAndExit({ ok: false, stage: 'draft_compose_failed', message: error.message });

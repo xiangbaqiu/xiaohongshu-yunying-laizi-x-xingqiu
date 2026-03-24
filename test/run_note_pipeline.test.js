@@ -37,6 +37,7 @@ function scaffoldProject(tempRoot) {
   copyFile(path.join(repoRoot, 'src', 'bundle_builder.js'), path.join(tempRoot, 'src', 'bundle_builder.js'));
   copyFile(path.join(repoRoot, 'src', 'brief_builder.js'), path.join(tempRoot, 'src', 'brief_builder.js'));
   copyFile(path.join(repoRoot, 'src', 'draft_composer.js'), path.join(tempRoot, 'src', 'draft_composer.js'));
+  copyFile(path.join(repoRoot, 'src', 'review_status.js'), path.join(tempRoot, 'src', 'review_status.js'));
   copyFile(path.join(repoRoot, 'src', 'note_artifact_io.js'), path.join(tempRoot, 'src', 'note_artifact_io.js'));
   copyFile(path.join(repoRoot, 'scripts', 'build_dashboard_data.js'), path.join(tempRoot, 'scripts', 'build_dashboard_data.js'));
 }

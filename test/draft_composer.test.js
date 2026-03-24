@@ -26,6 +26,8 @@ test('composeDraft emits valid draft structure and source posts', () => {
   assert.ok(draft.draft_id);
   assert.equal(draft.brief_id, 'brief-1');
   assert.equal(draft.bundle_id, 'bundle-1');
+  assert.equal(draft.review_status, 'draft');
+  assert.ok(draft.review_transition_rules);
   assert.ok(draft.body_markdown.includes('### 我自己的结论'));
   assert.equal(draft.source_posts.length, 2);
 });
@@ -78,4 +80,37 @@ test('composeDraft handles very short text without crashing', () => {
 
   assert.ok(draft.body_markdown.length > 0);
   assert.equal(draft.theme, 'AI');
+});
+
+test('composeDraft normalizes explicit review status', () => {
+  const approved = composeDraft({
+    brief: {
+      brief_id: 'brief-4',
+      theme: 'AI',
+      core_angle: 'angle',
+      narrative_structure: { hook_from_core_post: 'hook', final_takeaway: 'takeaway' }
+    },
+    bundle: {
+      bundle_id: 'bundle-4',
+      bundle: { core_post: null, supporting_posts: [] }
+    },
+    reviewStatus: 'approved'
+  });
+
+  const fallback = composeDraft({
+    brief: {
+      brief_id: 'brief-5',
+      theme: 'AI',
+      core_angle: 'angle',
+      narrative_structure: { hook_from_core_post: 'hook', final_takeaway: 'takeaway' }
+    },
+    bundle: {
+      bundle_id: 'bundle-5',
+      bundle: { core_post: null, supporting_posts: [] }
+    },
+    reviewStatus: 'weird-status'
+  });
+
+  assert.equal(approved.review_status, 'approved');
+  assert.equal(fallback.review_status, 'draft');
 });

@@ -66,6 +66,18 @@ function renderTop(elId, items, metricKey) {
     .join('');
 }
 
+function renderReviewStatus(status) {
+  const map = {
+    draft: '草稿',
+    reviewing: '审核中',
+    approved: '已通过',
+    needs_edit: '待修改',
+    rejected: '已拒绝',
+    published: '已发布'
+  };
+  return map[status] || status || '草稿';
+}
+
 function renderNotes(notes) {
   document.getElementById('notesList').innerHTML = (notes || [])
     .map((note) => `
@@ -155,6 +167,7 @@ function setupPostFilters(data) {
 function setupNoteFilters(data) {
   const themeFilter = document.getElementById('noteThemeFilter');
   const styleFilter = document.getElementById('noteStyleFilter');
+  const reviewStatusFilter = document.getElementById('noteReviewStatusFilter');
 
   for (const theme of data.filters_meta?.note_themes || []) {
     const option = document.createElement('option');
@@ -170,19 +183,29 @@ function setupNoteFilters(data) {
     styleFilter.appendChild(option);
   }
 
+  for (const status of data.filters_meta?.review_statuses || []) {
+    const option = document.createElement('option');
+    option.value = status;
+    option.textContent = renderReviewStatus(status);
+    reviewStatusFilter.appendChild(option);
+  }
+
   const apply = () => {
     const theme = themeFilter.value;
     const style = styleFilter.value;
+    const reviewStatus = reviewStatusFilter.value;
     const filtered = (data.notes || []).filter((note) => {
       const okTheme = !theme || note.theme === theme;
       const okStyle = !style || note.style === style;
-      return okTheme && okStyle;
+      const okReviewStatus = !reviewStatus || note.review_status === reviewStatus;
+      return okTheme && okStyle && okReviewStatus;
     });
     renderNotes(filtered);
   };
 
   themeFilter.addEventListener('change', apply);
   styleFilter.addEventListener('change', apply);
+  reviewStatusFilter.addEventListener('change', apply);
   apply();
 }
 

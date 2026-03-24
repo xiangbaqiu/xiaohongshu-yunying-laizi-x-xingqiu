@@ -1,3 +1,5 @@
+const { normalizeReviewStatus } = require('./review_status');
+
 function composeTitle(theme) {
   return [
     `我把最近 X 上关于 ${theme} 的讨论，整理成了一篇笔记`,
@@ -12,7 +14,7 @@ function composeCoverText(theme) {
   ];
 }
 
-function composeDraft({ brief, bundle, style = 'trend-analysis' }) {
+function composeDraft({ brief, bundle, style = 'trend-analysis', reviewStatus = 'draft' }) {
   const core = bundle.bundle?.core_post || null;
   const supports = bundle.bundle?.supporting_posts || [];
 
@@ -59,6 +61,11 @@ function composeDraft({ brief, bundle, style = 'trend-analysis' }) {
       ...(bundle.bundle?.supporting_posts || []).map((post) => ({ tweet_id: post.tweet_id, url: post.url }))
     ],
     status: 'draft',
+    review_status: normalizeReviewStatus(reviewStatus),
+    review_transition_rules: {
+      initial: 'draft',
+      allowed_next: ['reviewing', 'approved', 'needs_edit', 'rejected', 'published']
+    },
     created_at: new Date().toISOString()
   };
 }

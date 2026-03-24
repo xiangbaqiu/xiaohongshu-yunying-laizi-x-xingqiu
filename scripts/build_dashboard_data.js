@@ -115,6 +115,8 @@ function buildNoteLineage(draft, briefsById, bundlesById, runsByDraftId) {
     hashtags: draft.hashtags || [],
     source_posts: draft.source_posts || [],
     status: draft.status || 'draft',
+    review_status: normalizeReviewStatus(draft.review_status || draft.status),
+    review_transition_rules: draft.review_transition_rules || null,
     created_at: draft.created_at,
     source_post_count: (draft.source_posts || []).length,
     bundle_preview: bundle
@@ -152,6 +154,10 @@ function buildNoteLineage(draft, briefsById, bundlesById, runsByDraftId) {
 
 function uniqueValues(items, key) {
   return [...new Set(items.map((item) => item[key]).filter(Boolean))].sort();
+}
+
+function normalizeReviewStatus(status) {
+  return status || 'draft';
 }
 
 function main() {
@@ -204,7 +210,8 @@ function main() {
     },
     filters_meta: {
       note_themes: uniqueValues(notes, 'theme'),
-      note_styles: uniqueValues(notes, 'style')
+      note_styles: uniqueValues(notes, 'style'),
+      review_statuses: uniqueValues(notes, 'review_status')
     },
     accounts,
     top_lists: {
