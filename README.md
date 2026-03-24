@@ -3,25 +3,25 @@
 一个把 **X/Twitter 内容采集 → 结构化清洗 → 小红书草稿生成 → 本地 dashboard 展示** 串起来的最小实现项目。
 
 > 这是实现仓库（engine / app repo）。
-> 对应的 OpenClaw skill 仓库见：
+> 对应的 OpenClaw skill 仓库：
 > `https://github.com/xiangbaqiu/xiaohongshu-x-planet`
 
-## 能做什么
+## 项目目标
+
+跑通一条可重复执行的内容运营流水线：
+
+1. 采集一个或多个 X 账号内容
+2. 标准化、去重、落盘
+3. 从多条帖子组合生成一篇小红书草稿
+4. 在本地 dashboard 中查看账号内容和生成稿
+
+## 当前能力
 
 - 采集一个或多个 X 账号内容
 - 按账号保留最近 N 条内容，并按 `tweet_id` 去重
 - 生成标准化 `posts.jsonl` / `state.json` / `summary.json`
 - 从多条 X 内容组合生成一篇小红书草稿
 - 在本地 dashboard 中查看账号内容与生成稿
-
-## 当前范围
-
-当前是 MVP，重点在跑通运营流水线：
-
-1. 打开 X 账号页并提取 raw batch
-2. 本地标准化、去重、落盘
-3. 生成选题 bundle / brief / 小红书草稿
-4. 构建 dashboard 数据并本地查看
 
 ## 目录结构
 
@@ -38,11 +38,11 @@ xiaohongshu-yunying-laizi-x-xingqiu/
   notes/     # 运行生成，默认不入库
 ```
 
-## 主要命令
+## 快速开始
 
-### 1) 自动采集多个账号
+### 1) 配置采集任务
 
-先编辑 `collect.config.json`：
+编辑 `collect.config.json`：
 
 ```json
 {
@@ -53,21 +53,15 @@ xiaohongshu-yunying-laizi-x-xingqiu/
 }
 ```
 
-运行：
+### 2) 运行采集
 
 ```bash
 node src/auto_collect.js collect.config.json
 ```
 
-### 2) 从已有 raw 重新生成结构化数据
-
-```bash
-node src/run_from_raw.js samples/raw/sama-raw.json sama
-```
-
 ### 3) 生成小红书草稿
 
-先编辑 `note.config.json`：
+编辑 `note.config.json`：
 
 ```json
 {
@@ -101,6 +95,14 @@ python3 -m http.server 8008
 
 `http://127.0.0.1:8008/dashboard/index.html`
 
+## 其他常用命令
+
+### 从已有 raw 重新生成结构化数据
+
+```bash
+node src/run_from_raw.js samples/raw/sama-raw.json sama
+```
+
 ## 主要输出
 
 ### 采集输出
@@ -128,3 +130,7 @@ python3 -m http.server 8008
 ## 相关仓库
 
 - Skill repo: `https://github.com/xiangbaqiu/xiaohongshu-x-planet`
+
+## License
+
+MIT
