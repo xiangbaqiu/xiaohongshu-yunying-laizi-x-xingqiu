@@ -129,6 +129,11 @@ node src/run_from_raw.js samples/raw/sama-raw.json sama
 - 草稿生成基于多帖 bundle，而不是单帖改写
 - `data/` 和 `notes/` 属于运行产物，默认不提交到仓库
 
+## 文档入口
+
+- [Note Pipeline Refactor Task List](./docs/note-pipeline-refactor-task-list.md)
+- [Note Pipeline Contracts](./docs/note-pipeline-contracts.md)
+
 ## 相关仓库
 
 - Skill repo: `https://github.com/xiangbaqiu/xiaohongshu-x-planet`
