@@ -114,13 +114,26 @@ node src/run_note_pipeline.js note.config.json
 node scripts/build_dashboard_data.js
 ```
 
-### 5）运行测试
+### 5）独立运行各阶段
+
+```bash
+# 生成 bundle
+node src/run_bundle_builder.js note.config.json
+
+# 基于 bundle 生成 brief
+node src/run_brief_builder.js notes/bundles/<bundle_id>.json
+
+# 基于 brief + bundle 生成 draft
+node src/run_draft_composer.js notes/briefs/<brief_id>.json notes/bundles/<bundle_id>.json
+```
+
+### 6）运行测试
 
 ```bash
 node --test
 ```
 
-### 6）本地打开 dashboard
+### 7）本地打开 dashboard
 
 ```bash
 python3 -m http.server 8008
