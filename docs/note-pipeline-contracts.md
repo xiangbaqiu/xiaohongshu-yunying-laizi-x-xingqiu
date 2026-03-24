@@ -1,6 +1,8 @@
 # Note Pipeline Contracts
 
-本文档定义 note pipeline 各模块的输入输出约定，供工程实现、调试、dashboard 消费，以及后续 agent 化使用。
+本文档定义当前 note pipeline 各模块的输入输出约定，供工程实现、调试、dashboard 消费，以及后续 agent 化使用。
+
+> 状态说明：本文档描述的是**当前仓库已落地实现**，并包含少量过渡兼容字段说明。
 
 ---
 
@@ -9,27 +11,34 @@
 ```text
 posts.jsonl
   ↓
-BundleBuilder
+BundleBuilder (`src/bundle_builder.js`)
   ↓
 notes/bundles/<bundle_id>.json
   ↓
-BriefBuilder
+BriefBuilder (`src/brief_builder.js`)
   ↓
 notes/briefs/<brief_id>.json
   ↓
-DraftComposer
+DraftComposer (`src/draft_composer.js`)
   ↓
 notes/drafts/<draft_id>.json
 notes/drafts/<draft_id>.md
   ↓
 notes/runs/<run_id>.json
   ↓
-dashboard-data.json
+scripts/build_dashboard_data.js
+  ↓
+data/dashboard/dashboard-data.json
 ```
 
 ---
 
 ## 2. BundleBuilder
+
+### 当前位置
+
+- 文件：`src/bundle_builder.js`
+- 兼容入口：`src/select_posts.js`
 
 ### 职责
 
@@ -46,7 +55,7 @@ dashboard-data.json
 - 生成 brief
 - 决定最终发布内容
 
-### 建议函数签名
+### 当前函数签名
 
 ```js
 buildBundle({
@@ -70,11 +79,12 @@ buildBundle({
 }
 ```
 
-### 输出 contract
+### 当前输出 contract
 
 ```json
 {
   "bundle_id": "bundle-1742790000000",
+  "selection_id": "bundle-1742790000000",
   "theme": "AI coding",
   "bundle_strategy": "one-core-plus-supporting-posts",
   "selection_strategy": {
@@ -98,23 +108,7 @@ buildBundle({
         "finalScore": 88.2
       }
     },
-    "supporting_posts": [
-      {
-        "tweet_id": "456",
-        "account": "elonmusk",
-        "url": "https://x.com/...",
-        "text": "...",
-        "support_role": "comparison",
-        "reason": "补对比和变化",
-        "scores": {
-          "themeScore": 0.5,
-          "engagementScore": 900,
-          "recencyScore": 0.15,
-          "lengthScore": 0.64,
-          "finalScore": 61.3
-        }
-      }
-    ]
+    "supporting_posts": []
   },
   "created_at": "2026-03-24T13:00:00.000Z"
 }
@@ -122,18 +116,13 @@ buildBundle({
 
 ### 空结果约定
 
-当没有候选内容时，返回合法空 bundle，不应直接 silent fail：
+当没有候选内容时，返回合法空 bundle：
 
 ```json
 {
   "bundle_id": "bundle-1742790000000",
+  "selection_id": "bundle-1742790000000",
   "theme": "AI coding",
-  "bundle_strategy": "one-core-plus-supporting-posts",
-  "selection_strategy": {
-    "original_only": true,
-    "top_k": 4,
-    "sort_by": ["theme_score", "engagement_score", "recency_score", "length_score"]
-  },
   "candidate_count": 0,
   "bundle": {
     "core_post": null,
@@ -153,6 +142,11 @@ notes/bundles/<bundle_id>.json
 
 ## 3. BriefBuilder
 
+### 当前位置
+
+- 文件：`src/brief_builder.js`
+- 兼容入口：`src/distill_posts.js`
+
 ### 职责
 
 只负责：
@@ -167,7 +161,7 @@ notes/bundles/<bundle_id>.json
 - 生成完整正文
 - 回头改 bundle
 
-### 建议函数签名
+### 当前函数签名
 
 ```js
 buildBrief(bundle)
@@ -191,39 +185,24 @@ buildBrief(bundle)
 }
 ```
 
-### 输出 contract
+### 当前输出 contract
 
 ```json
 {
   "brief_id": "brief-1742790000100",
   "bundle_id": "bundle-1742790000000",
   "theme": "AI coding",
-  "core_angle": "围绕 AI coding，从一条主观点切入，再用多条帖子补数据、对比和案例。",
+  "core_angle": "围绕 AI coding，从一条主观点出发，再用多条帖子补数据、对比和案例，整合成一篇更适合小红书阅读的笔记。",
   "narrative_structure": {
     "hook_from_core_post": "...",
-    "supporting_points": [
-      {
-        "tweet_id": "456",
-        "account": "elonmusk",
-        "support_role": "comparison",
-        "point": "补充对比关系，说明变化方向"
-      }
-    ],
-    "final_takeaway": "这组内容共同说明：AI coding 不是孤立讨论，而是可以整理成一个更完整的趋势判断。"
+    "supporting_points": [],
+    "final_takeaway": "这组内容共同说明：AI coding 不是一条孤立讨论，而是可以被整理成一个更完整的趋势判断。"
   },
-  "claims": [
-    {
-      "claim": "...",
-      "evidence_post_ids": ["123"]
-    }
-  ],
-  "audience_takeaway": [
-    "不要只看单条热帖，要看多条内容共同指向什么。",
-    "把 X 上的碎片讨论整合后，才更适合转成中文平台的内容。"
-  ],
+  "claims": [],
+  "audience_takeaway": [],
   "source_bundle": {
     "core_post_id": "123",
-    "supporting_post_ids": ["456"]
+    "supporting_post_ids": []
   },
   "created_at": "2026-03-24T13:00:05.000Z"
 }
@@ -238,11 +217,11 @@ buildBrief(bundle)
   "brief_id": "brief-1742790000100",
   "bundle_id": "bundle-1742790000000",
   "theme": "AI coding",
-  "core_angle": "围绕 AI coding 整理多条讨论，形成适合小红书表达的结构化判断。",
+  "core_angle": "围绕 AI coding，从一条主观点出发，再用多条帖子补数据、对比和案例，整合成一篇更适合小红书阅读的笔记。",
   "narrative_structure": {
     "hook_from_core_post": "先用主题切入",
     "supporting_points": [],
-    "final_takeaway": "当前素材不足，但主题方向仍可继续补充。"
+    "final_takeaway": "围绕 AI coding 的当前素材还不够完整，但方向已经明确，可以继续补充。"
   },
   "claims": [],
   "audience_takeaway": [],
@@ -264,6 +243,11 @@ notes/briefs/<brief_id>.json
 
 ## 4. DraftComposer
 
+### 当前位置
+
+- 文件：`src/draft_composer.js`
+- 兼容入口：`src/compose_note.js`
+
 ### 职责
 
 只负责：
@@ -277,7 +261,7 @@ notes/briefs/<brief_id>.json
 - 改选题
 - 重做 brief
 
-### 建议函数签名
+### 当前函数签名
 
 ```js
 composeDraft({
@@ -311,32 +295,25 @@ composeDraft({
 }
 ```
 
-### 输出 contract
+### 当前输出 contract
 
 ```json
 {
   "draft_id": "draft-1742790000200",
+  "note_id": "draft-1742790000200",
   "brief_id": "brief-1742790000100",
   "bundle_id": "bundle-1742790000000",
+  "source_brief_id": "brief-1742790000100",
+  "source_bundle_id": "bundle-1742790000000",
+  "source_selection_id": "bundle-1742790000000",
   "theme": "AI coding",
   "style": "trend-analysis",
-  "angle": "围绕 AI coding，从一条主观点切入，再用多条帖子补数据、对比和案例。",
-  "title_options": [
-    "我把最近 X 上关于 AI coding 的讨论，整理成了一篇笔记",
-    "AI coding 最近在聊什么？我看完几条内容后有个判断"
-  ],
-  "cover_text_options": [
-    "AI coding 的重点变了",
-    "别只看单条热帖"
-  ],
+  "angle": "...",
+  "title_options": [],
+  "cover_text_options": [],
   "body_markdown": "...",
-  "hashtags": ["#AI", "#小红书运营", "#AIcoding"],
-  "source_posts": [
-    {
-      "tweet_id": "123",
-      "url": "https://x.com/..."
-    }
-  ],
+  "hashtags": [],
+  "source_posts": [],
   "status": "draft",
   "created_at": "2026-03-24T13:00:10.000Z"
 }
@@ -367,6 +344,10 @@ notes/drafts/<draft_id>.md
 
 ## 5. run_note_pipeline.js
 
+### 当前位置
+
+- 文件：`src/run_note_pipeline.js`
+
 ### 职责
 
 只保留 orchestration：
@@ -382,7 +363,7 @@ notes/drafts/<draft_id>.md
 9. 可选 rebuild dashboard
 10. 返回结构化结果
 
-### 建议输入配置
+### 当前输入配置
 
 文件：`note.config.json`
 
@@ -397,7 +378,7 @@ notes/drafts/<draft_id>.md
 }
 ```
 
-### 建议输出 contract
+### 当前输出 contract
 
 ```json
 {
@@ -407,11 +388,11 @@ notes/drafts/<draft_id>.md
   "brief_id": "brief-1742790000100",
   "draft_id": "draft-1742790000200",
   "paths": {
-    "bundlePath": "notes/bundles/bundle-1742790000000.json",
-    "briefPath": "notes/briefs/brief-1742790000100.json",
-    "draftJsonPath": "notes/drafts/draft-1742790000200.json",
-    "draftMdPath": "notes/drafts/draft-1742790000200.md",
-    "runSummaryPath": "notes/runs/note-run-1742790000300.json"
+    "bundlePath": "/abs/path/notes/bundles/bundle-1742790000000.json",
+    "briefPath": "/abs/path/notes/briefs/brief-1742790000100.json",
+    "draftJsonPath": "/abs/path/notes/drafts/draft-1742790000200.json",
+    "draftMdPath": "/abs/path/notes/drafts/draft-1742790000200.md",
+    "runSummaryPath": "/abs/path/notes/runs/note-run-1742790000300.json"
   },
   "dashboard": {
     "attempted": true,
@@ -420,23 +401,19 @@ notes/drafts/<draft_id>.md
 }
 ```
 
-### 失败输出建议
+### 当前失败输出
+
+当前实现统一返回：
 
 ```json
 {
   "ok": false,
-  "stage": "bundle_build_failed",
-  "message": "No candidate posts found for theme: AI coding"
+  "stage": "artifact_write_failed",
+  "message": "..."
 }
 ```
 
-可选 `stage`：
-
-- `bundle_build_failed`
-- `brief_build_failed`
-- `draft_compose_failed`
-- `artifact_write_failed`
-- `dashboard_rebuild_failed`
+> 说明：更细粒度的 `bundle_build_failed` / `brief_build_failed` / `draft_compose_failed` 还可以继续细化，但当前实现已经至少能避免 silent fail。
 
 ---
 
@@ -451,7 +428,7 @@ notes/drafts/<draft_id>.md
 - dashboard 展示
 - 未来 agent 化
 
-### 输出 contract
+### 当前输出 contract
 
 ```json
 {
@@ -465,6 +442,10 @@ notes/drafts/<draft_id>.md
     "brief_json": "notes/briefs/brief-1742790000100.json",
     "draft_json": "notes/drafts/draft-1742790000200.json",
     "draft_md": "notes/drafts/draft-1742790000200.md"
+  },
+  "dashboard": {
+    "attempted": true,
+    "ok": true
   },
   "created_at": "2026-03-24T13:00:11.000Z"
 }
@@ -480,41 +461,35 @@ notes/runs/<run_id>.json
 
 ## 7. Dashboard 消费 contract
 
-### 输入来源
+### 当前输入来源
 
-至少读取：
+当前已读取：
 
 - `notes/drafts/*.json`
-
-建议逐步支持：
-
 - `notes/briefs/*.json`
 - `notes/bundles/*.json`
-- `notes/runs/*.json`
 
-### 建议输出结构
+### 当前输出结构
 
 ```json
 {
   "notes": [
     {
       "draft_id": "draft-1742790000200",
+      "note_id": "draft-1742790000200",
       "brief_id": "brief-1742790000100",
       "bundle_id": "bundle-1742790000000",
       "theme": "AI coding",
       "title_options": ["..."],
       "body_markdown": "...",
       "created_at": "2026-03-24T13:00:10.000Z",
-      "source_posts": [
-        {
-          "tweet_id": "123",
-          "url": "https://x.com/..."
-        }
-      ],
+      "source_posts": [],
       "bundle_preview": {
         "core_post": {
           "tweet_id": "123",
-          "account": "sama"
+          "account": "sama",
+          "text": "...",
+          "url": "https://x.com/..."
         },
         "supporting_count": 3
       },
@@ -539,9 +514,9 @@ notes/runs/<run_id>.json
 
 ## 8. 字段兼容策略（过渡期）
 
-为了避免一次性打断已有流程，过渡期允许兼容旧字段：
+为了避免一次性打断已有流程，当前实现保留兼容旧字段：
 
-### 建议兼容映射
+### 当前兼容映射
 
 - `selection_id` ↔ `bundle_id`
 - `note_id` ↔ `draft_id`
@@ -554,7 +529,7 @@ const bundleId = artifact.bundle_id || artifact.selection_id || null;
 const draftId = artifact.draft_id || artifact.note_id || null;
 ```
 
-兼容策略建议只保留一个过渡阶段，稳定后统一切到：
+后续如果外部调用和 dashboard 都已切稳，可以逐步移除兼容字段，统一切到：
 
 - `bundle_id`
 - `brief_id`
@@ -574,34 +549,20 @@ notes/runs/<run_id>.json
 
 ---
 
-## 10. 验收最低要求
+## 10. 测试状态
 
-### BundleBuilder
+当前仓库已存在并通过：
 
-- 输入合法时产出 bundle
-- 空输入时返回合法空 bundle
-- 不因缺少某个账号文件直接崩溃
+- `test/bundle_builder.test.js`
+- `test/brief_builder.test.js`
+- `test/draft_composer.test.js`
+- `test/run_note_pipeline.test.js`
 
-### BriefBuilder
+运行方式：
 
-- 输入 bundle 时产出 brief
-- `core_post = null` 时有 fallback
-
-### DraftComposer
-
-- 输入 brief + bundle 时产出 draft json 和 markdown
-- `source_posts` 继承正确
-
-### run_note_pipeline.js
-
-- 能完整落盘全部 artifact
-- dashboard rebuild 失败时，draft 结果仍保留
-- 返回明确 `ok/stage/message`
-
-### Dashboard
-
-- 能显示 draft
-- 能兼容 brief/bundle 缺失
+```bash
+node --test
+```
 
 ---
 

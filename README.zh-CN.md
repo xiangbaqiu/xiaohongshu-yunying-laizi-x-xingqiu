@@ -20,8 +20,34 @@
 - 采集一个或多个 X 账号内容
 - 按账号保留最近 N 条内容，并按 `tweet_id` 去重
 - 生成标准化 `posts.jsonl` / `state.json` / `summary.json`
-- 从多条 X 内容组合生成一篇小红书草稿
-- 在本地 dashboard 中查看账号内容与生成稿
+- 通过模块化 note pipeline 生成 bundle / brief / draft / run summary
+- 在本地 dashboard 中查看草稿及其 lineage（bundle / brief / draft）
+- 内置 Node 测试，覆盖 builders 和 pipeline integration
+
+## 当前 note pipeline
+
+```text
+posts.jsonl
+  ↓
+BundleBuilder (`src/bundle_builder.js`)
+  ↓
+notes/bundles/<bundle_id>.json
+  ↓
+BriefBuilder (`src/brief_builder.js`)
+  ↓
+notes/briefs/<brief_id>.json
+  ↓
+DraftComposer (`src/draft_composer.js`)
+  ↓
+notes/drafts/<draft_id>.json
+notes/drafts/<draft_id>.md
+  ↓
+notes/runs/<run_id>.json
+  ↓
+scripts/build_dashboard_data.js
+  ↓
+data/dashboard/dashboard-data.json
+```
 
 ## 目录结构
 
@@ -33,6 +59,8 @@ xiaohongshu-yunying-laizi-x-xingqiu/
   src/
   scripts/
   dashboard/
+  docs/
+  test/
   samples/
   data/      # 运行生成，默认不入库
   notes/     # 运行生成，默认不入库
@@ -69,7 +97,8 @@ node src/auto_collect.js collect.config.json
   "accounts": ["sama", "elonmusk"],
   "top_k": 4,
   "original_only": true,
-  "style": "trend-analysis"
+  "style": "trend-analysis",
+  "rebuild_dashboard": true
 }
 ```
 
@@ -85,7 +114,13 @@ node src/run_note_pipeline.js note.config.json
 node scripts/build_dashboard_data.js
 ```
 
-### 5）本地打开 dashboard
+### 5）运行测试
+
+```bash
+node --test
+```
+
+### 6）本地打开 dashboard
 
 ```bash
 python3 -m http.server 8008
@@ -113,12 +148,13 @@ node src/run_from_raw.js samples/raw/sama-raw.json sama
 - `data/runs/<runId>/summary.json`
 - `data/dashboard/dashboard-data.json`
 
-### 草稿输出
+### Note pipeline 输出
 
-- `notes/selections/*.json`
+- `notes/bundles/*.json`
 - `notes/briefs/*.json`
 - `notes/drafts/*.json`
 - `notes/drafts/*.md`
+- `notes/runs/*.json`
 
 ## 默认约定
 
@@ -126,6 +162,7 @@ node src/run_from_raw.js samples/raw/sama-raw.json sama
 - 默认以 `original` 内容作为主观察池
 - 草稿生成基于多帖 bundle，而不是单帖改写
 - `data/` 和 `notes/` 属于运行产物，默认不提交到仓库
+- 当前保留兼容字段过渡：`selection_id ↔ bundle_id`，`note_id ↔ draft_id`
 
 ## 文档入口
 
