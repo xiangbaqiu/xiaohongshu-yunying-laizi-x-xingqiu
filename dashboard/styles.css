@@ -61,7 +61,7 @@ th { color: var(--muted); font-size: 13px; background: #fafbff; position: sticky
   white-space: pre-wrap;
   line-height: 1.45;
 }
-.filters .filter-row { display: flex; gap: 10px; }
+.filters .filter-row { display: flex; gap: 10px; flex-wrap: wrap; }
 input, select {
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -91,6 +91,19 @@ input, select {
   color: var(--text);
 }
 .note-tags { margin-top: 12px; color: var(--muted); font-size: 13px; }
+.detail-block {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: #fcfcfe;
+}
+.detail-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
 a { color: var(--brand); text-decoration: none; }
 @media (max-width: 900px) {
   .kpis, .two-col { grid-template-columns: 1fr; }

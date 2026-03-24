@@ -8,6 +8,7 @@ const outputPath = path.join(projectRoot, 'data', 'dashboard', 'dashboard-data.j
 const notesDraftsRoot = path.join(projectRoot, 'notes', 'drafts');
 const notesBriefsRoot = path.join(projectRoot, 'notes', 'briefs');
 const notesBundlesRoot = path.join(projectRoot, 'notes', 'bundles');
+const notesRunsRoot = path.join(projectRoot, 'notes', 'runs');
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -92,17 +93,19 @@ function summarizeAccount(handle, posts) {
   };
 }
 
-function buildNoteLineage(draft, briefsById, bundlesById) {
+function buildNoteLineage(draft, briefsById, bundlesById, runsByDraftId) {
   const briefId = draft.brief_id || draft.source_brief_id || null;
   const bundleId = draft.bundle_id || draft.source_bundle_id || draft.source_selection_id || null;
   const draftId = draft.draft_id || draft.note_id || null;
   const brief = briefId ? briefsById.get(briefId) || null : null;
   const bundle = bundleId ? bundlesById.get(bundleId) || null : null;
+  const run = draftId ? runsByDraftId.get(draftId) || null : null;
 
   return {
     draft_id: draftId,
     brief_id: briefId,
     bundle_id: bundleId,
+    run_id: run?.run_id || null,
     theme: draft.theme,
     style: draft.style,
     angle: draft.angle,
@@ -113,6 +116,7 @@ function buildNoteLineage(draft, briefsById, bundlesById) {
     source_posts: draft.source_posts || [],
     status: draft.status || 'draft',
     created_at: draft.created_at,
+    source_post_count: (draft.source_posts || []).length,
     bundle_preview: bundle
       ? {
           core_post: bundle.bundle?.core_post
@@ -123,16 +127,31 @@ function buildNoteLineage(draft, briefsById, bundlesById) {
                 url: bundle.bundle.core_post.url
               }
             : null,
-          supporting_count: (bundle.bundle?.supporting_posts || []).length
+          supporting_count: (bundle.bundle?.supporting_posts || []).length,
+          candidate_count: bundle.candidate_count || 0
         }
       : null,
     brief_preview: brief
       ? {
           core_angle: brief.core_angle,
-          final_takeaway: brief.narrative_structure?.final_takeaway || null
+          final_takeaway: brief.narrative_structure?.final_takeaway || null,
+          supporting_points_count: (brief.narrative_structure?.supporting_points || []).length,
+          claims_count: (brief.claims || []).length
+        }
+      : null,
+    run_preview: run
+      ? {
+          run_id: run.run_id,
+          created_at: run.created_at,
+          dashboard_ok: run.dashboard?.ok ?? null,
+          dashboard_attempted: run.dashboard?.attempted ?? null
         }
       : null
   };
+}
+
+function uniqueValues(items, key) {
+  return [...new Set(items.map((item) => item[key]).filter(Boolean))].sort();
 }
 
 function main() {
@@ -154,8 +173,10 @@ function main() {
   const noteDrafts = readJsonDir(notesDraftsRoot);
   const noteBriefs = readJsonDir(notesBriefsRoot);
   const noteBundles = readJsonDir(notesBundlesRoot);
+  const noteRuns = readJsonDir(notesRunsRoot);
   const briefsById = indexById(noteBriefs, (item) => item.brief_id);
   const bundlesById = indexById(noteBundles, (item) => item.bundle_id || item.selection_id);
+  const runsByDraftId = indexById(noteRuns, (item) => item.draft_id);
   const originalsOnly = sortedPosts.filter((p) => p.content_type === 'original');
   const contentTypeCounts = sortedPosts.reduce((acc, post) => {
     const key = post.content_type || 'unknown';
@@ -167,6 +188,7 @@ function main() {
   const todayPosts = sortedPosts.filter((p) => (p.created_at || '').slice(0, 10) === todayStr);
   const topLiked = [...sortedPosts].sort((a, b) => safeNum(b.metrics?.like) - safeNum(a.metrics?.like)).slice(0, 20);
   const topViewed = [...sortedPosts].sort((a, b) => safeNum(b.metrics?.view) - safeNum(a.metrics?.view)).slice(0, 20);
+  const notes = noteDrafts.map((draft) => buildNoteLineage(draft, briefsById, bundlesById, runsByDraftId));
 
   const dashboard = {
     generated_at: new Date().toISOString(),
@@ -174,10 +196,15 @@ function main() {
       accounts_total: accounts.length,
       posts_total: sortedPosts.length,
       originals_total: originalsOnly.length,
-      notes_total: noteDrafts.length,
+      notes_total: notes.length,
       posts_today: todayPosts.length,
       latest_post_at: sortedPosts[0]?.created_at || null,
+      latest_note_at: notes[0]?.created_at || null,
       content_type_counts: contentTypeCounts
+    },
+    filters_meta: {
+      note_themes: uniqueValues(notes, 'theme'),
+      note_styles: uniqueValues(notes, 'style')
     },
     accounts,
     top_lists: {
@@ -185,7 +212,7 @@ function main() {
       viewed: topViewed
     },
     posts: sortedPosts,
-    notes: noteDrafts.map((draft) => buildNoteLineage(draft, briefsById, bundlesById))
+    notes
   };
 
   ensureDir(path.dirname(outputPath));
