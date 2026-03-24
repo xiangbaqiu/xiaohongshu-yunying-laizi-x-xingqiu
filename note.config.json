@@ -1,0 +1,7 @@
+{
+  "theme": "AI coding",
+  "accounts": ["sama", "elonmusk"],
+  "top_k": 4,
+  "original_only": true,
+  "style": "trend-analysis"
+}

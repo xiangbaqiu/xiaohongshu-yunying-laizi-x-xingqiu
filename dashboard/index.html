@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小红书运营来自 X 星球 / Dashboard-v0.1</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <div>
+          <h1>小红书运营来自 X 星球</h1>
+          <p>运营看板 / Dashboard-v0.1</p>
+        </div>
+        <div class="meta" id="generatedAt">数据加载中…</div>
+      </header>
+
+      <section class="kpis" id="kpis"></section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>账号概览</h2>
+        </div>
+        <div class="accounts" id="accounts"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head filters">
+          <h2>内容列表</h2>
+          <div class="filter-row">
+            <input id="searchInput" placeholder="搜正文关键词" />
+            <select id="accountFilter">
+              <option value="">全部账号</option>
+            </select>
+            <select id="typeFilter">
+              <option value="original">仅原创</option>
+              <option value="">全部类型</option>
+              <option value="repost">仅 repost</option>
+              <option value="quote">仅 quote</option>
+              <option value="reply">仅 reply</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>账号</th>
+                <th>正文</th>
+                <th>类型</th>
+                <th>点赞</th>
+                <th>转发</th>
+                <th>回复</th>
+                <th>浏览</th>
+                <th>链接</th>
+              </tr>
+            </thead>
+            <tbody id="postsTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>生成内容</h2></div>
+        <div id="notesList" class="notes-list"></div>
+      </section>
+
+      <section class="panel two-col">
+        <div>
+          <div class="panel-head"><h2>点赞 Top</h2></div>
+          <div id="topLiked" class="rank-list"></div>
+        </div>
+        <div>
+          <div class="panel-head"><h2>浏览 Top</h2></div>
+          <div id="topViewed" class="rank-list"></div>
+        </div>
+      </section>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

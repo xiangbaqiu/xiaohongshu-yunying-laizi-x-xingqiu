@@ -1,0 +1,69 @@
+{
+  "extracted_at": "2026-03-23T04:06:35.040Z",
+  "url": "https://x.com/sama",
+  "count": 5,
+  "items": [
+    {
+      "tweet_id": "2033935276079510011",
+      "url": "https://x.com/sama/status/2033935276079510011",
+      "text": "I have so much gratitude to people who wrote extremely complex software character-by-character. It already feels difficult to remember how much effort it really took.\n\nThank you for getting us to this point.",
+      "created_at": "2026-03-17T15:55:33.000Z",
+      "author_handle": "sama",
+      "media_urls": [
+        "https://pbs.twimg.com/profile_images/1904933748015255552/k43GMz63_x96.jpg",
+        "https://pbs.twimg.com/profile_images/1885410181409820672/ztsaR0JW_bigger.jpg"
+      ],
+      "metric_hints": [
+        "4548 Replies. Reply",
+        "4012 reposts. Repost",
+        "35937 Likes. Like",
+        "5493133 views. View post analytics",
+        "Bookmark",
+        "Share post"
+      ],
+      "article_text": "Sam Altman\n@sama\n·\nMar 17\nI have so much gratitude to people who wrote extremely complex software character-by-character. It already feels difficult to remember how much effort it really took.\n\nThank you for getting us to this point.\n4.5K\n4K\n35K\n5.4M"
+    },
+    {
+      "tweet_id": "2033660522961502288",
+      "url": "https://x.com/sama/status/2033660522961502288",
+      "text": "It is also very smart, but...I generally agree with this, and really feel it myself on the 5.3 -> 5.4 upgrade.\nGPT 5.4 is very good, but its most distinguishing characteristic is its humanity. 5.3 Codex was already incredible at coding so it's interesting to see what made it so much more successful.\n\nPeople claim they want a 10x autist savant coder, but what they want is personality. x.com/gdb/status/203…",
+      "created_at": "2026-03-16T21:43:46.000Z",
+      "author_handle": "sama",
+      "media_urls": [
+        "https://pbs.twimg.com/profile_images/1904933748015255552/k43GMz63_x96.jpg",
+        "https://pbs.twimg.com/profile_images/1885410181409820672/ztsaR0JW_bigger.jpg",
+        "https://pbs.twimg.com/profile_images/1752863538627149824/LOJXhBvu_normal.jpg"
+      ],
+      "metric_hints": [
+        "680 Replies. Reply",
+        "142 reposts. Repost",
+        "2184 Likes. Like",
+        "767064 views. View post analytics",
+        "Bookmark",
+        "Share post"
+      ],
+      "article_text": "Sam Altman\n@sama\n·\nMar 17\nIt is also very smart, but...I generally agree with this, and really feel it myself on the 5.3 -> 5.4 upgrade.\nQuote\nrohit\n@krishnanrohit\n·\nMar 17\nGPT 5.4 is very good, but its most distinguishing characteristic is its humanity. 5.3 Codex was already incredible at coding so it's interesting to see what made it so much more successful.\n\nPeople claim they want a 10x autist savant coder, but what they want is personality. x.com/gdb/status/203…\n680\n142\n2.1K\n767K"
+    },
+    {
+      "tweet_id": "2033659889843913000",
+      "url": "https://x.com/sama/status/2033659889843913000",
+      "text": "Great first week for 5.4 in the API.\n\nBuilders building fast.\ngpt-5.4 has ramped faster than any other model we've launched in the API: within a week of launch, 5T tokens per day, handling more volume than our entire API one year ago, and reaching an annualized run rate of $1B in net-new revenue.\n\nit's a good model, try it out!",
+      "created_at": "2026-03-16T21:41:15.000Z",
+      "author_handle": "sama",
+      "media_urls": [
+        "https://pbs.twimg.com/profile_images/1904933748015255552/k43GMz63_x96.jpg",
+        "https://pbs.twimg.com/profile_images/1885410181409820672/ztsaR0JW_bigger.jpg",
+        "https://pbs.twimg.com/profile_images/1347621377503711233/bHg3ipfD_normal.jpg"
+      ],
+      "metric_hints": [
+        "395 Replies. Reply",
+        "117 reposts. Repost",
+        "2279 Likes. Like",
+        "372795 views. View post analytics",
+        "Bookmark",
+        "Share post"
+      ],
+      "article_text": "Sam Altman\n@sama\n·\nMar 17\nGreat first week for 5.4 in the API.\n\nBuilders building fast.\nQuote\nGreg Brockman\n@gdb\n·\nMar 17\ngpt-5.4 has ramped faster than any other model we've launched in the API: within a week of launch, 5T tokens per day, handling more volume than our entire API one year ago, and reaching an annualized run rate of $1B in net-new revenue.\n\nit's a good model, try it out!\n395\n117\n2.2K\n372K"
+    }
+  ]
+}

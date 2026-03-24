@@ -1,0 +1,6 @@
+{
+  "accounts": ["sama", "elonmusk"],
+  "count_per_account": 3,
+  "max_scroll_rounds": 4,
+  "mode": "replace_latest"
+}

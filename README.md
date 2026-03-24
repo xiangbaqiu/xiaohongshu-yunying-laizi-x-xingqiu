@@ -1,0 +1,130 @@
+# 小红书运营来自 X 星球
+
+一个把 **X/Twitter 内容采集 → 结构化清洗 → 小红书草稿生成 → 本地 dashboard 展示** 串起来的最小实现项目。
+
+> 这是实现仓库（engine / app repo）。
+> 对应的 OpenClaw skill 仓库见：
+> `https://github.com/xiangbaqiu/xiaohongshu-x-planet`
+
+## 能做什么
+
+- 采集一个或多个 X 账号内容
+- 按账号保留最近 N 条内容，并按 `tweet_id` 去重
+- 生成标准化 `posts.jsonl` / `state.json` / `summary.json`
+- 从多条 X 内容组合生成一篇小红书草稿
+- 在本地 dashboard 中查看账号内容与生成稿
+
+## 当前范围
+
+当前是 MVP，重点在跑通运营流水线：
+
+1. 打开 X 账号页并提取 raw batch
+2. 本地标准化、去重、落盘
+3. 生成选题 bundle / brief / 小红书草稿
+4. 构建 dashboard 数据并本地查看
+
+## 目录结构
+
+```text
+xiaohongshu-yunying-laizi-x-xingqiu/
+  collect.config.json
+  note.config.json
+  config.example.json
+  src/
+  scripts/
+  dashboard/
+  samples/
+  data/      # 运行生成，默认不入库
+  notes/     # 运行生成，默认不入库
+```
+
+## 主要命令
+
+### 1) 自动采集多个账号
+
+先编辑 `collect.config.json`：
+
+```json
+{
+  "accounts": ["sama", "elonmusk"],
+  "count_per_account": 20,
+  "max_scroll_rounds": 6,
+  "mode": "replace_latest"
+}
+```
+
+运行：
+
+```bash
+node src/auto_collect.js collect.config.json
+```
+
+### 2) 从已有 raw 重新生成结构化数据
+
+```bash
+node src/run_from_raw.js samples/raw/sama-raw.json sama
+```
+
+### 3) 生成小红书草稿
+
+先编辑 `note.config.json`：
+
+```json
+{
+  "theme": "AI coding",
+  "accounts": ["sama", "elonmusk"],
+  "top_k": 4,
+  "original_only": true,
+  "style": "trend-analysis"
+}
+```
+
+运行：
+
+```bash
+node src/run_note_pipeline.js note.config.json
+```
+
+### 4) 重建 dashboard 数据
+
+```bash
+node scripts/build_dashboard_data.js
+```
+
+### 5) 本地打开 dashboard
+
+```bash
+python3 -m http.server 8008
+```
+
+然后访问：
+
+`http://127.0.0.1:8008/dashboard/index.html`
+
+## 主要输出
+
+### 采集输出
+
+- `data/x/accounts/<handle>/posts.jsonl`
+- `data/x/accounts/<handle>/raw-batches/<runId>.json`
+- `data/x/accounts/<handle>/state.json`
+- `data/runs/<runId>/summary.json`
+- `data/dashboard/dashboard-data.json`
+
+### 草稿输出
+
+- `notes/selections/*.json`
+- `notes/briefs/*.json`
+- `notes/drafts/*.json`
+- `notes/drafts/*.md`
+
+## 默认约定
+
+- 推荐采集模式：`replace_latest`
+- 默认以 `original` 内容作为主观察池
+- 草稿生成基于多帖 bundle，而不是单帖改写
+- `data/` 和 `notes/` 属于运行产物，默认不提交到仓库
+
+## 相关仓库
+
+- Skill repo: `https://github.com/xiangbaqiu/xiaohongshu-x-planet`

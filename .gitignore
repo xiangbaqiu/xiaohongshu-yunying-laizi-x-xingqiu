@@ -1,0 +1,14 @@
+.DS_Store
+node_modules/
+
+# Generated runtime outputs
+data/
+notes/
+
+# Local configs / scratch
+*.log
+.env
+.env.*
+
+# Keep sample raw data if intentionally curated; ignore accidental OS files
+samples/.DS_Store

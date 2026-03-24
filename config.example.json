@@ -1,0 +1,9 @@
+{
+  "accounts": ["sama"],
+  "max_scroll_rounds": 5,
+  "max_posts_per_account": 30,
+  "dedupe_by_tweet_id": true,
+  "save_raw_batches": true,
+  "project_name": "小红书运营来自 X 星球",
+  "version": "mvp-v0.1"
+}
