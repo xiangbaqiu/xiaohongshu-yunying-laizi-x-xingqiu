@@ -1,11 +1,9 @@
 # 小红书运营来自 X 星球
 
-[中文说明](./README.zh-CN.md)
-
 一个把 **X/Twitter 内容采集 → 结构化清洗 → 小红书草稿生成 → 本地 dashboard 展示** 串起来的最小实现项目。
 
 > 这是实现仓库（engine / app repo）。
-> 对应的 OpenClaw skill 仓库：
+> 对应的 OpenClaw Skill 仓库：
 > `https://github.com/xiangbaqiu/xiaohongshu-x-planet`
 
 ## 项目目标
@@ -42,7 +40,7 @@ xiaohongshu-yunying-laizi-x-xingqiu/
 
 ## 快速开始
 
-### 1) 配置采集任务
+### 1）配置采集任务
 
 编辑 `collect.config.json`：
 
@@ -55,13 +53,13 @@ xiaohongshu-yunying-laizi-x-xingqiu/
 }
 ```
 
-### 2) 运行采集
+### 2）运行采集
 
 ```bash
 node src/auto_collect.js collect.config.json
 ```
 
-### 3) 生成小红书草稿
+### 3）生成小红书草稿
 
 编辑 `note.config.json`：
 
@@ -81,13 +79,13 @@ node src/auto_collect.js collect.config.json
 node src/run_note_pipeline.js note.config.json
 ```
 
-### 4) 重建 dashboard 数据
+### 4）重建 dashboard 数据
 
 ```bash
 node scripts/build_dashboard_data.js
 ```
 
-### 5) 本地打开 dashboard
+### 5）本地打开 dashboard
 
 ```bash
 python3 -m http.server 8008
