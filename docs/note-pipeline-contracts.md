@@ -245,7 +245,6 @@ notes/briefs/<brief_id>.json
 ### 当前位置
 
 - 文件：`src/draft_composer.js`
-- 兼容入口：`src/compose_note.js`
 
 ### 职责
 

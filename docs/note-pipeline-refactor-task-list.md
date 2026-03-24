@@ -174,13 +174,13 @@
 
 ## 任务 6：保留 `src/compose_note.js` 作为兼容层
 
-**状态：已完成**
+**状态：已完成并移除**
 
 ### 已落地内容
 
-- 当前 `src/compose_note.js` 已变为薄适配层
-- 老逻辑还能跑
-- 新逻辑路径成立
+- 兼容层已完成过渡使命
+- 当前内部主链路已不再依赖 `src/compose_note.js`
+- 文件已移除，统一使用 `src/draft_composer.js`
 
 ---
 
@@ -510,3 +510,4 @@ notes/runs/<run_id>.json
 2. `refactor: remove legacy compatibility wrappers for note pipeline`
 3. `feat: make pipeline failure stages explicit per builder`
 4. `feat: enrich dashboard lineage inspection UI`
+ion UI`
