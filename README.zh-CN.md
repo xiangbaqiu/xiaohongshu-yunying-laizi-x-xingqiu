@@ -177,6 +177,12 @@ node scripts/dashboard_server.js
 
 ## 其他常用命令
 
+### 从已通过的 draft 生成 publish-ready payload
+
+```bash
+node scripts/create_publish_ready.js <draft_id> --prepared-by xiangbaqiu
+```
+
 ### 从已有 raw 重新生成结构化数据
 
 ```bash
@@ -199,6 +205,7 @@ node src/run_from_raw.js samples/raw/sama-raw.json sama
 - `notes/briefs/*.json`
 - `notes/drafts/*.json`
 - `notes/drafts/*.md`
+- `notes/publish-ready/*.json`
 - `notes/runs/*.json`
 
 ## 默认约定
