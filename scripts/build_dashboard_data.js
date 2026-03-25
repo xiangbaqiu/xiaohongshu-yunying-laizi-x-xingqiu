@@ -33,14 +33,18 @@ function readJsonDir(dir) {
     .filter((name) => name.endsWith('.json'))
     .map((name) => readJson(path.join(dir, name)))
     .filter(Boolean)
-    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    .sort((a, b) => {
+      const aTime = new Date(a.published_at || a.prepared_at || a.created_at || a.review_updated_at || 0).getTime();
+      const bTime = new Date(b.published_at || b.prepared_at || b.created_at || b.review_updated_at || 0).getTime();
+      return bTime - aTime;
+    });
 }
 
 function indexById(items, keyResolver) {
   const map = new Map();
   for (const item of items) {
     const key = keyResolver(item);
-    if (key) map.set(key, item);
+    if (key && !map.has(key)) map.set(key, item);
   }
   return map;
 }
@@ -85,13 +89,35 @@ function summarizeAccount(handle, posts) {
   };
 }
 
-function buildNoteLineage(draft, briefsById, bundlesById, runsByDraftId) {
+function buildNoteLineage(draft, briefsById, bundlesById, runsByDraftId, publishReadyByDraftId, publishRecordsByDraftId) {
   const briefId = draft.brief_id || draft.source_brief_id || null;
   const bundleId = draft.bundle_id || draft.source_bundle_id || draft.source_selection_id || null;
   const draftId = draft.draft_id || draft.note_id || null;
   const brief = briefId ? briefsById.get(briefId) || null : null;
   const bundle = bundleId ? bundlesById.get(bundleId) || null : null;
   const run = draftId ? runsByDraftId.get(draftId) || null : null;
+  const publishReady = draftId ? publishReadyByDraftId.get(draftId) || null : null;
+  const publishRecord = draftId ? publishRecordsByDraftId.get(draftId) || null : null;
+  const publishReadyPreview = publishReady || draft.publish_ready_id
+    ? {
+        publish_ready_id: publishReady?.publish_ready_id || draft.publish_ready_id || null,
+        prepared_at: publishReady?.prepared_at || null,
+        prepared_by: publishReady?.prepared_by || null,
+        title: publishReady?.title || null,
+        cover_text: publishReady?.cover_text || null
+      }
+    : null;
+  const publishRecordPreview = publishRecord || draft.publish_record_id || draft.published_at || draft.published_url
+    ? {
+        publish_record_id: publishRecord?.publish_record_id || draft.publish_record_id || null,
+        platform: publishRecord?.platform || draft.published_platform || null,
+        published_at: publishRecord?.published_at || draft.published_at || null,
+        published_by: publishRecord?.published_by || draft.published_by || null,
+        platform_post_url: publishRecord?.platform_post_url || draft.published_url || null,
+        platform_post_id: publishRecord?.platform_post_id || draft.platform_post_id || null,
+        notes: publishRecord?.notes || null
+      }
+    : null;
 
   return {
     draft_id: draftId,
@@ -112,6 +138,14 @@ function buildNoteLineage(draft, briefsById, bundlesById, runsByDraftId) {
     review_updated_at: draft.review_updated_at || null,
     review_history_count: Array.isArray(draft.review_history) ? draft.review_history.length : 0,
     review_transition_rules: draft.review_transition_rules || null,
+    has_publish_ready: Boolean(publishReadyPreview),
+    has_publish_record: Boolean(publishRecordPreview),
+    publish_ready: publishReadyPreview,
+    publish_record: publishRecordPreview,
+    publish_ready_id: publishReadyPreview?.publish_ready_id || null,
+    publish_record_id: publishRecordPreview?.publish_record_id || null,
+    published_at: publishRecordPreview?.published_at || draft.published_at || null,
+    published_url: publishRecordPreview?.platform_post_url || draft.published_url || null,
     created_at: draft.created_at,
     source_post_count: (draft.source_posts || []).length,
     bundle_preview: bundle
@@ -161,6 +195,8 @@ function buildDashboardData(projectRoot = path.resolve(__dirname, '..')) {
   const notesDraftsRoot = path.join(projectRoot, 'notes', 'drafts');
   const notesBriefsRoot = path.join(projectRoot, 'notes', 'briefs');
   const notesBundlesRoot = path.join(projectRoot, 'notes', 'bundles');
+  const notesPublishReadyRoot = path.join(projectRoot, 'notes', 'publish-ready');
+  const notesPublishRecordsRoot = path.join(projectRoot, 'notes', 'publish-records');
   const notesRunsRoot = path.join(projectRoot, 'notes', 'runs');
 
   const handles = fs.existsSync(accountsRoot)
@@ -181,9 +217,13 @@ function buildDashboardData(projectRoot = path.resolve(__dirname, '..')) {
   const noteDrafts = readJsonDir(notesDraftsRoot);
   const noteBriefs = readJsonDir(notesBriefsRoot);
   const noteBundles = readJsonDir(notesBundlesRoot);
+  const publishReadyPayloads = readJsonDir(notesPublishReadyRoot);
+  const publishRecords = readJsonDir(notesPublishRecordsRoot);
   const noteRuns = readJsonDir(notesRunsRoot);
   const briefsById = indexById(noteBriefs, (item) => item.brief_id);
   const bundlesById = indexById(noteBundles, (item) => item.bundle_id || item.selection_id);
+  const publishReadyByDraftId = indexById(publishReadyPayloads, (item) => item.draft_id);
+  const publishRecordsByDraftId = indexById(publishRecords, (item) => item.draft_id);
   const runsByDraftId = indexById(noteRuns, (item) => item.draft_id);
   const originalsOnly = sortedPosts.filter((p) => p.content_type === 'original');
   const contentTypeCounts = sortedPosts.reduce((acc, post) => {
@@ -196,7 +236,14 @@ function buildDashboardData(projectRoot = path.resolve(__dirname, '..')) {
   const todayPosts = sortedPosts.filter((p) => (p.created_at || '').slice(0, 10) === todayStr);
   const topLiked = [...sortedPosts].sort((a, b) => safeNum(b.metrics?.like) - safeNum(a.metrics?.like)).slice(0, 20);
   const topViewed = [...sortedPosts].sort((a, b) => safeNum(b.metrics?.view) - safeNum(a.metrics?.view)).slice(0, 20);
-  const notes = noteDrafts.map((draft) => buildNoteLineage(draft, briefsById, bundlesById, runsByDraftId));
+  const notes = noteDrafts.map((draft) => buildNoteLineage(
+    draft,
+    briefsById,
+    bundlesById,
+    runsByDraftId,
+    publishReadyByDraftId,
+    publishRecordsByDraftId
+  ));
 
   const dashboard = {
     generated_at: new Date().toISOString(),
