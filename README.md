@@ -185,6 +185,12 @@ node scripts/dashboard_server.js
 node scripts/create_publish_ready.js <draft_id> --prepared-by xiangbaqiu
 ```
 
+### 记录真实发布结果并回写 published 状态
+
+```bash
+node scripts/record_publish_result.js <draft_id> --published-by xiangbaqiu --platform-url https://www.xiaohongshu.com/explore/<note_id>
+```
+
 ### 从已有 raw 重新生成结构化数据
 
 ```bash
@@ -208,6 +214,7 @@ node src/run_from_raw.js samples/raw/sama-raw.json sama
 - `notes/drafts/*.json`
 - `notes/drafts/*.md`
 - `notes/publish-ready/*.json`
+- `notes/publish-records/*.json`
 - `notes/runs/*.json`
 
 ## 默认约定
