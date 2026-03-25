@@ -215,6 +215,7 @@ node src/run_from_raw.js samples/raw/sama-raw.json sama
 - [Note Pipeline 模块化重构任务清单](./docs/note-pipeline-refactor-task-list.md)
 - [Note Pipeline Contracts](./docs/note-pipeline-contracts.md)
 - [Note Artifact Retention Rules](./docs/note-artifact-retention.md)
+- [Draft To Publish Workflow](./docs/draft-to-publish-workflow.md)
 
 ## 相关仓库
 
