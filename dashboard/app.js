@@ -155,7 +155,11 @@ function getNoteFormState(note) {
     reviewerNote: note.review_annotation?.reviewer_note || '',
     editSuggestion: note.review_annotation?.edit_suggestion || '',
     rejectionReason: note.review_annotation?.rejection_reason || '',
-    operatorIdentity: note.review_annotation?.operator_identity || ''
+    operatorIdentity: note.review_annotation?.operator_identity || '',
+    publishedAt: note.publish_record?.published_at || '',
+    platformUrl: note.publish_record?.platform_post_url || note.published_url || '',
+    platformPostId: note.publish_record?.platform_post_id || '',
+    publishNote: note.publish_record?.notes || ''
   };
 }
 
@@ -179,7 +183,7 @@ function renderReviewAnnotation(note) {
 }
 
 function renderReviewAnnotationForm(note) {
-  if (!appState.apiAvailable) return '';
+  if (!appState.apiAvailable || note.review_status === 'published') return '';
 
   const form = getNoteFormState(note);
 
@@ -229,6 +233,10 @@ function renderReviewAnnotationForm(note) {
 }
 
 function renderReviewActions(note) {
+  if (note.review_status === 'published') {
+    return '';
+  }
+
   if (!appState.apiAvailable) {
     return '<div class="review-actions hint">当前是只读模式。请用 `node scripts/dashboard_server.js` 打开 dashboard 以启用审核操作。</div>';
   }
@@ -278,6 +286,70 @@ function renderPublishReadyAction(note) {
   `;
 }
 
+function renderPublishRecordForm(note) {
+  if (!appState.apiAvailable || note.review_status !== 'approved' || !note.has_publish_ready) {
+    return '';
+  }
+
+  const form = getNoteFormState(note);
+
+  return `
+    <div class="review-form publish-record-form">
+      <div class="review-form-grid">
+        <label class="review-field">
+          <span>发布时间</span>
+          <input
+            class="review-input"
+            data-draft-id="${note.draft_id}"
+            data-field="publishedAt"
+            placeholder="可选，默认当前时间"
+            value="${formValue(form.publishedAt)}"
+          />
+        </label>
+        <label class="review-field review-field-wide">
+          <span>平台链接</span>
+          <input
+            class="review-input"
+            data-draft-id="${note.draft_id}"
+            data-field="platformUrl"
+            placeholder="必填，例如 https://www.xiaohongshu.com/explore/<note_id>"
+            value="${formValue(form.platformUrl)}"
+          />
+        </label>
+        <label class="review-field">
+          <span>平台 ID</span>
+          <input
+            class="review-input"
+            data-draft-id="${note.draft_id}"
+            data-field="platformPostId"
+            placeholder="可选，便于追踪"
+            value="${formValue(form.platformPostId)}"
+          />
+        </label>
+        <label class="review-field review-field-wide">
+          <span>发布备注</span>
+          <textarea
+            class="review-input review-textarea"
+            data-draft-id="${note.draft_id}"
+            data-field="publishNote"
+            placeholder="可选，记录发布时间或补充说明"
+          >${formValue(form.publishNote)}</textarea>
+        </label>
+      </div>
+      <div class="review-actions publish-actions">
+        <button
+          type="button"
+          class="publish-record-action"
+          data-draft-id="${note.draft_id}"
+          ${appState.pendingDraftId === note.draft_id ? 'disabled' : ''}
+        >
+          记录已发布
+        </button>
+      </div>
+    </div>
+  `;
+}
+
 function renderNotes(notes) {
   document.getElementById('notesList').innerHTML = (notes || [])
     .map((note) => `
@@ -290,6 +362,7 @@ function renderNotes(notes) {
         ${renderReviewAnnotationForm(note)}
         ${renderReviewActions(note)}
         ${renderPublishReadyAction(note)}
+        ${renderPublishRecordForm(note)}
         ${renderReviewAnnotation(note)}
         ${renderPublishTraceability(note)}
         ${note.bundle_preview ? `
@@ -367,7 +440,11 @@ function syncNoteForms(data) {
       reviewerNote: note.review_annotation?.reviewer_note || '',
       editSuggestion: note.review_annotation?.edit_suggestion || '',
       rejectionReason: note.review_annotation?.rejection_reason || '',
-      operatorIdentity: note.review_annotation?.operator_identity || ''
+      operatorIdentity: note.review_annotation?.operator_identity || '',
+      publishedAt: note.publish_record?.published_at || '',
+      platformUrl: note.publish_record?.platform_post_url || note.published_url || '',
+      platformPostId: note.publish_record?.platform_post_id || '',
+      publishNote: note.publish_record?.notes || ''
     }
   ]));
 }
@@ -551,6 +628,42 @@ async function createPublishReadyAction(draftId) {
   }
 }
 
+async function createPublishRecordAction(draftId) {
+  appState.pendingDraftId = draftId;
+  appState.feedback = '正在记录发布结果…';
+  renderFeedback();
+  renderNotesFromState();
+
+  try {
+    const response = await fetch(`/api/drafts/${encodeURIComponent(draftId)}/publish-record`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        operator_identity: appState.noteForms[draftId]?.operatorIdentity || '',
+        published_at: appState.noteForms[draftId]?.publishedAt || '',
+        platform_url: appState.noteForms[draftId]?.platformUrl || '',
+        platform_post_id: appState.noteForms[draftId]?.platformPostId || '',
+        publish_note: appState.noteForms[draftId]?.publishNote || ''
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.ok) {
+      throw new Error(payload.message || '发布结果记录失败');
+    }
+
+    appState.feedback = `已记录 ${draftId} 的发布结果`;
+    const data = await loadDashboardData();
+    renderDashboard(data);
+  } catch (error) {
+    appState.feedback = `发布结果记录失败：${error.message}`;
+    renderFeedback();
+  } finally {
+    appState.pendingDraftId = null;
+    renderNotesFromState();
+    renderFeedback();
+  }
+}
+
 document.getElementById('notesList').addEventListener('click', async (event) => {
   const reviewButton = event.target.closest('.review-action');
   if (reviewButton) {
@@ -561,6 +674,12 @@ document.getElementById('notesList').addEventListener('click', async (event) => 
   const publishReadyButton = event.target.closest('.publish-ready-action');
   if (publishReadyButton) {
     await createPublishReadyAction(publishReadyButton.dataset.draftId);
+    return;
+  }
+
+  const publishRecordButton = event.target.closest('.publish-record-action');
+  if (publishRecordButton) {
+    await createPublishRecordAction(publishRecordButton.dataset.draftId);
   }
 });
 
