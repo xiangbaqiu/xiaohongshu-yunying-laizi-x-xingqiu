@@ -257,6 +257,27 @@ function renderReviewActions(note) {
   `;
 }
 
+function renderPublishReadyAction(note) {
+  if (!appState.apiAvailable || note.review_status !== 'approved') {
+    return '';
+  }
+
+  const label = note.has_publish_ready ? '重新生成发布包' : '生成发布包';
+
+  return `
+    <div class="review-actions publish-actions">
+      <button
+        type="button"
+        class="publish-ready-action"
+        data-draft-id="${note.draft_id}"
+        ${appState.pendingDraftId === note.draft_id ? 'disabled' : ''}
+      >
+        ${label}
+      </button>
+    </div>
+  `;
+}
+
 function renderNotes(notes) {
   document.getElementById('notesList').innerHTML = (notes || [])
     .map((note) => `
@@ -268,6 +289,7 @@ function renderNotes(notes) {
         <div class="note-tags">来源帖子数：${note.source_post_count || 0} · 标签：${(note.hashtags || []).join(' ')}</div>
         ${renderReviewAnnotationForm(note)}
         ${renderReviewActions(note)}
+        ${renderPublishReadyAction(note)}
         ${renderReviewAnnotation(note)}
         ${renderPublishTraceability(note)}
         ${note.bundle_preview ? `
@@ -497,11 +519,49 @@ async function updateReviewStatus(draftId, reviewStatus) {
   }
 }
 
-document.getElementById('notesList').addEventListener('click', async (event) => {
-  const button = event.target.closest('.review-action');
-  if (!button) return;
+async function createPublishReadyAction(draftId) {
+  appState.pendingDraftId = draftId;
+  appState.feedback = '正在生成发布包…';
+  renderFeedback();
+  renderNotesFromState();
 
-  await updateReviewStatus(button.dataset.draftId, button.dataset.reviewStatus);
+  try {
+    const response = await fetch(`/api/drafts/${encodeURIComponent(draftId)}/publish-ready`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        operator_identity: appState.noteForms[draftId]?.operatorIdentity || ''
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.ok) {
+      throw new Error(payload.message || '发布包生成失败');
+    }
+
+    appState.feedback = `已生成 ${draftId} 的发布包`;
+    const data = await loadDashboardData();
+    renderDashboard(data);
+  } catch (error) {
+    appState.feedback = `发布包生成失败：${error.message}`;
+    renderFeedback();
+  } finally {
+    appState.pendingDraftId = null;
+    renderNotesFromState();
+    renderFeedback();
+  }
+}
+
+document.getElementById('notesList').addEventListener('click', async (event) => {
+  const reviewButton = event.target.closest('.review-action');
+  if (reviewButton) {
+    await updateReviewStatus(reviewButton.dataset.draftId, reviewButton.dataset.reviewStatus);
+    return;
+  }
+
+  const publishReadyButton = event.target.closest('.publish-ready-action');
+  if (publishReadyButton) {
+    await createPublishReadyAction(publishReadyButton.dataset.draftId);
+  }
 });
 
 document.getElementById('notesList').addEventListener('input', (event) => {
