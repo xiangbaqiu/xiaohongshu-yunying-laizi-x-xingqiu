@@ -51,6 +51,11 @@ function writePublishReady(baseDir, publishReady) {
   return writeJson(filePath, publishReady);
 }
 
+function writePublishRecord(baseDir, publishRecord) {
+  const filePath = path.join(baseDir, 'notes', 'publish-records', `${publishRecord.publish_record_id}.json`);
+  return writeJson(filePath, publishRecord);
+}
+
 module.exports = {
   ensureDir,
   writeJson,
@@ -61,5 +66,6 @@ module.exports = {
   writeDraft,
   writeDraftMarkdown,
   writeRunSummary,
-  writePublishReady
+  writePublishReady,
+  writePublishRecord
 };
