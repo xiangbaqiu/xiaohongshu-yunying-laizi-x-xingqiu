@@ -135,7 +135,27 @@ node src/run_draft_composer.js notes/briefs/<brief_id>.json notes/bundles/<bundl
 node --test
 ```
 
-### 7) 本地打开 dashboard
+### 7) 预览或归档历史 note artifacts
+
+默认是 dry-run，只预览将被归档的历史 artifacts：
+
+```bash
+node scripts/archive_note_artifacts.js --keep-drafts 20
+```
+
+确认无误后再执行实际归档：
+
+```bash
+node scripts/archive_note_artifacts.js --keep-drafts 20 --apply
+```
+
+如果要给其他脚本消费结果，可以输出 JSON：
+
+```bash
+node scripts/archive_note_artifacts.js --keep-drafts 20 --json
+```
+
+### 8) 本地打开 dashboard
 
 只读模式：
 
@@ -196,6 +216,7 @@ node src/run_from_raw.js samples/raw/sama-raw.json sama
 
 - [Note Pipeline Refactor Task List](./docs/note-pipeline-refactor-task-list.md)
 - [Note Pipeline Contracts](./docs/note-pipeline-contracts.md)
+- [Note Artifact Retention Rules](./docs/note-artifact-retention.md)
 
 ## 相关仓库
 
