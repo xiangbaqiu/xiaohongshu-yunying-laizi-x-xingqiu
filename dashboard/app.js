@@ -78,6 +78,46 @@ function renderReviewStatus(status) {
   return map[status] || status || '草稿';
 }
 
+function renderPublishTraceability(note) {
+  const publishReady = note.publish_ready;
+  const publishRecord = note.publish_record;
+
+  if (!publishReady && !publishRecord && note.review_status !== 'approved' && note.review_status !== 'published') {
+    return '';
+  }
+
+  const rows = [];
+
+  if (publishReady) {
+    rows.push(`<div class="note-meta">发布包：已生成 · ID：${publishReady.publish_ready_id || '-'} · 准备时间：${formatTime(publishReady.prepared_at)} · 准备人：${publishReady.prepared_by || '-'}</div>`);
+    if (publishReady.title) {
+      rows.push(`<div class="note-meta">发布标题：${escapeHtml(publishReady.title)}</div>`);
+    }
+  } else if (note.review_status === 'approved') {
+    rows.push('<div class="note-meta">发布包：未生成</div>');
+  }
+
+  if (publishRecord) {
+    const url = publishRecord.platform_post_url
+      ? `<a href="${publishRecord.platform_post_url}" target="_blank">查看发布链接</a>`
+      : '无链接';
+    rows.push(`<div class="note-meta">发布记录：已记录 · ID：${publishRecord.publish_record_id || '-'} · 平台：${publishRecord.platform || '-'} · 发布时间：${formatTime(publishRecord.published_at)} · 发布人：${publishRecord.published_by || '-'}</div>`);
+    rows.push(`<div class="note-meta">外部链接：${url}${publishRecord.platform_post_id ? ` · 平台 ID：${escapeHtml(publishRecord.platform_post_id)}` : ''}</div>`);
+    if (publishRecord.notes) {
+      rows.push(`<div class="note-meta">发布备注：${escapeHtml(publishRecord.notes)}</div>`);
+    }
+  } else if (note.review_status === 'published') {
+    rows.push('<div class="note-meta">发布记录：缺失，请检查历史 artifact</div>');
+  }
+
+  return `
+    <div class="detail-block">
+      <div class="detail-title">发布追踪</div>
+      ${rows.join('')}
+    </div>
+  `;
+}
+
 const appState = {
   data: null,
   apiAvailable: false,
@@ -229,6 +269,7 @@ function renderNotes(notes) {
         ${renderReviewAnnotationForm(note)}
         ${renderReviewActions(note)}
         ${renderReviewAnnotation(note)}
+        ${renderPublishTraceability(note)}
         ${note.bundle_preview ? `
           <div class="detail-block">
             <div class="detail-title">Bundle 预览</div>

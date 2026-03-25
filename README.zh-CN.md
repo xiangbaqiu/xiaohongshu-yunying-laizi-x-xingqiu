@@ -22,6 +22,7 @@
 - 生成标准化 `posts.jsonl` / `state.json` / `summary.json`
 - 通过模块化 note pipeline 生成 bundle / brief / draft / run summary
 - 在本地 dashboard 中查看草稿及其 lineage（bundle / brief / draft）
+- 在本地 dashboard 中查看审核状态、publish-ready、publish record 等发布追踪信息
 - 内置 Node 测试，覆盖 builders 和 pipeline integration
 
 ## 当前 note pipeline
