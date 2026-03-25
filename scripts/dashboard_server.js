@@ -83,6 +83,10 @@ function createDashboardServer(projectRoot) {
         const { draft, previousStatus } = updateDraftReviewStatus(projectRoot, {
           draftId,
           reviewStatus: body.review_status,
+          reviewerNote: body.reviewer_note,
+          editSuggestion: body.edit_suggestion,
+          rejectionReason: body.rejection_reason,
+          operatorIdentity: body.operator_identity,
           source: 'dashboard'
         });
         const { dashboard } = buildDashboardData(projectRoot);
@@ -91,6 +95,7 @@ function createDashboardServer(projectRoot) {
           draft_id: draftId,
           previous_review_status: previousStatus,
           review_status: draft.review_status,
+          review_annotation: draft.review_annotation || null,
           review_updated_at: draft.review_updated_at,
           dashboard_generated_at: dashboard.generated_at
         });
