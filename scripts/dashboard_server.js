@@ -3,6 +3,7 @@ const fs = require('fs');
 const http = require('http');
 const path = require('path');
 const { buildDashboardData } = require('./build_dashboard_data');
+const { createPublishReady } = require('../src/publish_ready_builder');
 const { updateDraftReviewStatus } = require('../src/review_action_store');
 
 function sendJson(res, statusCode, payload) {
@@ -97,6 +98,29 @@ function createDashboardServer(projectRoot) {
           review_status: draft.review_status,
           review_annotation: draft.review_annotation || null,
           review_updated_at: draft.review_updated_at,
+          dashboard_generated_at: dashboard.generated_at
+        });
+      } catch (error) {
+        return sendJson(res, 400, { ok: false, message: error.message });
+      }
+    }
+
+    if (req.method === 'POST' && /^\/api\/drafts\/[^/]+\/publish-ready$/.test(url.pathname)) {
+      try {
+        const draftId = decodeURIComponent(url.pathname.split('/')[3]);
+        const body = await readBody(req);
+        const { publishReady, filePath } = createPublishReady(projectRoot, {
+          draftId,
+          preparedBy: body.operator_identity
+        });
+        const { dashboard } = buildDashboardData(projectRoot);
+        return sendJson(res, 200, {
+          ok: true,
+          draft_id: draftId,
+          publish_ready_id: publishReady.publish_ready_id,
+          prepared_at: publishReady.prepared_at,
+          prepared_by: publishReady.prepared_by,
+          artifact_path: path.relative(projectRoot, filePath),
           dashboard_generated_at: dashboard.generated_at
         });
       } catch (error) {

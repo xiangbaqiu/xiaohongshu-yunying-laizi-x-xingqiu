@@ -168,7 +168,7 @@ python3 -m http.server 8008
 
 `http://127.0.0.1:8008/dashboard/index.html`
 
-如果要在 dashboard 里直接做审核状态流转，请使用可写模式：
+如果要在 dashboard 里直接做审核状态流转、生成 publish-ready payload，请使用可写模式：
 
 ```bash
 node scripts/dashboard_server.js
