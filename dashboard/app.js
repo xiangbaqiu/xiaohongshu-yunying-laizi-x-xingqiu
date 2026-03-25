@@ -78,15 +78,72 @@ function renderReviewStatus(status) {
   return map[status] || status || '草稿';
 }
 
+const appState = {
+  data: null,
+  apiAvailable: false,
+  postFilters: {
+    query: '',
+    account: '',
+    type: 'original'
+  },
+  noteFilters: {
+    theme: '',
+    style: '',
+    reviewStatus: ''
+  },
+  pendingDraftId: null,
+  feedback: ''
+};
+
+function renderModeBadge() {
+  const badge = document.getElementById('dashboardMode');
+  badge.textContent = appState.apiAvailable ? '可操作模式' : '只读模式';
+  badge.className = `mode-badge ${appState.apiAvailable ? 'live' : 'readonly'}`;
+}
+
+function renderFeedback() {
+  document.getElementById('actionFeedback').textContent = appState.feedback || '';
+}
+
+function renderReviewActions(note) {
+  if (!appState.apiAvailable) {
+    return '<div class="review-actions hint">当前是只读模式。请用 `node scripts/dashboard_server.js` 打开 dashboard 以启用审核操作。</div>';
+  }
+
+  const actions = [
+    ['reviewing', '标记审核中'],
+    ['approved', '标记通过'],
+    ['needs_edit', '标记待修改'],
+    ['rejected', '标记拒绝']
+  ];
+
+  return `
+    <div class="review-actions">
+      ${actions.map(([status, label]) => `
+        <button
+          type="button"
+          class="review-action ${note.review_status === status ? 'active' : ''}"
+          data-draft-id="${note.draft_id}"
+          data-review-status="${status}"
+          ${appState.pendingDraftId === note.draft_id ? 'disabled' : ''}
+        >
+          ${label}
+        </button>
+      `).join('')}
+    </div>
+  `;
+}
+
 function renderNotes(notes) {
   document.getElementById('notesList').innerHTML = (notes || [])
     .map((note) => `
       <div class="note-card">
         <h3>${escapeHtml((note.title_options && note.title_options[0]) || '未命名草稿')}</h3>
-        <div class="note-meta">主题：${note.theme || '-'} · 风格：${note.style || '-'} · 状态：${note.status || 'draft'} · 生成时间：${formatTime(note.created_at)}</div>
+        <div class="note-meta">主题：${note.theme || '-'} · 风格：${note.style || '-'} · 状态：${note.status || 'draft'} · 审核状态：<span class="status-chip">${renderReviewStatus(note.review_status)}</span> · 生成时间：${formatTime(note.created_at)}</div>
         <div class="note-meta">Draft：${note.draft_id || '-'} · Brief：${note.brief_id || '-'} · Bundle：${note.bundle_id || '-'} · Run：${note.run_id || '-'}</div>
         <div class="note-preview">${escapeHtml(String(note.body_markdown || '').slice(0, 300))}${String(note.body_markdown || '').length > 300 ? '...' : ''}</div>
         <div class="note-tags">来源帖子数：${note.source_post_count || 0} · 标签：${(note.hashtags || []).join(' ')}</div>
+        ${renderReviewActions(note)}
         ${note.bundle_preview ? `
           <div class="detail-block">
             <div class="detail-title">Bundle 预览</div>
@@ -132,11 +189,35 @@ function renderPosts(posts) {
     .join('');
 }
 
+function renderPostsFromState() {
+  if (!appState.data) return;
+  const filtered = appState.data.posts.filter((p) => {
+    const handle = p.account || p.timeline_owner || p.display_author_handle || p.author_handle;
+    const okAccount = !appState.postFilters.account || handle === appState.postFilters.account;
+    const okType = !appState.postFilters.type || (p.content_type || 'unknown') === appState.postFilters.type;
+    const okText = !appState.postFilters.query || (p.text || '').toLowerCase().includes(appState.postFilters.query);
+    return okAccount && okType && okText;
+  });
+  renderPosts(filtered);
+}
+
+function renderNotesFromState() {
+  if (!appState.data) return;
+  const filtered = (appState.data.notes || []).filter((note) => {
+    const okTheme = !appState.noteFilters.theme || note.theme === appState.noteFilters.theme;
+    const okStyle = !appState.noteFilters.style || note.style === appState.noteFilters.style;
+    const okReviewStatus = !appState.noteFilters.reviewStatus || note.review_status === appState.noteFilters.reviewStatus;
+    return okTheme && okStyle && okReviewStatus;
+  });
+  renderNotes(filtered);
+}
+
 function setupPostFilters(data) {
   const searchInput = document.getElementById('searchInput');
   const accountFilter = document.getElementById('accountFilter');
   const typeFilter = document.getElementById('typeFilter');
 
+  accountFilter.innerHTML = '<option value="">全部账号</option>';
   for (const acc of data.accounts) {
     const option = document.createElement('option');
     option.value = acc.handle;
@@ -144,30 +225,34 @@ function setupPostFilters(data) {
     accountFilter.appendChild(option);
   }
 
-  const apply = () => {
-    const q = searchInput.value.trim().toLowerCase();
-    const account = accountFilter.value;
-    const type = typeFilter.value;
-    const filtered = data.posts.filter((p) => {
-      const handle = p.account || p.timeline_owner || p.display_author_handle || p.author_handle;
-      const okAccount = !account || handle === account;
-      const okType = !type || (p.content_type || 'unknown') === type;
-      const okText = !q || (p.text || '').toLowerCase().includes(q);
-      return okAccount && okType && okText;
-    });
-    renderPosts(filtered);
+  searchInput.value = appState.postFilters.query;
+  accountFilter.value = appState.postFilters.account;
+  typeFilter.value = appState.postFilters.type;
+
+  searchInput.oninput = () => {
+    appState.postFilters.query = searchInput.value.trim().toLowerCase();
+    renderPostsFromState();
+  };
+  accountFilter.onchange = () => {
+    appState.postFilters.account = accountFilter.value;
+    renderPostsFromState();
+  };
+  typeFilter.onchange = () => {
+    appState.postFilters.type = typeFilter.value;
+    renderPostsFromState();
   };
 
-  searchInput.addEventListener('input', apply);
-  accountFilter.addEventListener('change', apply);
-  typeFilter.addEventListener('change', apply);
-  apply();
+  renderPostsFromState();
 }
 
 function setupNoteFilters(data) {
   const themeFilter = document.getElementById('noteThemeFilter');
   const styleFilter = document.getElementById('noteStyleFilter');
   const reviewStatusFilter = document.getElementById('noteReviewStatusFilter');
+
+  themeFilter.innerHTML = '<option value="">全部主题</option>';
+  styleFilter.innerHTML = '<option value="">全部风格</option>';
+  reviewStatusFilter.innerHTML = '<option value="">全部审核状态</option>';
 
   for (const theme of data.filters_meta?.note_themes || []) {
     const option = document.createElement('option');
@@ -190,36 +275,95 @@ function setupNoteFilters(data) {
     reviewStatusFilter.appendChild(option);
   }
 
-  const apply = () => {
-    const theme = themeFilter.value;
-    const style = styleFilter.value;
-    const reviewStatus = reviewStatusFilter.value;
-    const filtered = (data.notes || []).filter((note) => {
-      const okTheme = !theme || note.theme === theme;
-      const okStyle = !style || note.style === style;
-      const okReviewStatus = !reviewStatus || note.review_status === reviewStatus;
-      return okTheme && okStyle && okReviewStatus;
-    });
-    renderNotes(filtered);
+  themeFilter.value = appState.noteFilters.theme;
+  styleFilter.value = appState.noteFilters.style;
+  reviewStatusFilter.value = appState.noteFilters.reviewStatus;
+
+  themeFilter.onchange = () => {
+    appState.noteFilters.theme = themeFilter.value;
+    renderNotesFromState();
+  };
+  styleFilter.onchange = () => {
+    appState.noteFilters.style = styleFilter.value;
+    renderNotesFromState();
+  };
+  reviewStatusFilter.onchange = () => {
+    appState.noteFilters.reviewStatus = reviewStatusFilter.value;
+    renderNotesFromState();
   };
 
-  themeFilter.addEventListener('change', apply);
-  styleFilter.addEventListener('change', apply);
-  reviewStatusFilter.addEventListener('change', apply);
-  apply();
+  renderNotesFromState();
 }
 
-fetch('../data/dashboard/dashboard-data.json')
-  .then((r) => r.json())
+async function loadDashboardData() {
+  try {
+    const response = await fetch('/api/dashboard-data');
+    if (!response.ok) throw new Error(`API ${response.status}`);
+    appState.apiAvailable = true;
+    return await response.json();
+  } catch (_error) {
+    const fallbackResponse = await fetch('../data/dashboard/dashboard-data.json');
+    if (!fallbackResponse.ok) throw new Error(`Dashboard data ${fallbackResponse.status}`);
+    appState.apiAvailable = false;
+    return await fallbackResponse.json();
+  }
+}
+
+function renderDashboard(data) {
+  appState.data = data;
+  document.getElementById('generatedAt').textContent = '数据生成时间：' + formatTime(data.generated_at);
+  renderModeBadge();
+  renderFeedback();
+  renderKpis(data.overview);
+  renderAccounts(data.accounts);
+  renderTop('topLiked', data.top_lists.liked, 'like');
+  renderTop('topViewed', data.top_lists.viewed, 'view');
+  setupPostFilters(data);
+  setupNoteFilters(data);
+}
+
+async function updateReviewStatus(draftId, reviewStatus) {
+  appState.pendingDraftId = draftId;
+  appState.feedback = '正在更新审核状态…';
+  renderFeedback();
+  renderNotesFromState();
+
+  try {
+    const response = await fetch(`/api/drafts/${encodeURIComponent(draftId)}/review-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ review_status: reviewStatus })
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.ok) {
+      throw new Error(payload.message || '状态更新失败');
+    }
+
+    appState.feedback = `已更新 ${draftId} -> ${renderReviewStatus(payload.review_status)}`;
+    const data = await loadDashboardData();
+    renderDashboard(data);
+  } catch (error) {
+    appState.feedback = `状态更新失败：${error.message}`;
+    renderFeedback();
+  } finally {
+    appState.pendingDraftId = null;
+    renderNotesFromState();
+    renderFeedback();
+  }
+}
+
+document.getElementById('notesList').addEventListener('click', async (event) => {
+  const button = event.target.closest('.review-action');
+  if (!button) return;
+
+  await updateReviewStatus(button.dataset.draftId, button.dataset.reviewStatus);
+});
+
+loadDashboardData()
   .then((data) => {
-    document.getElementById('generatedAt').textContent = '数据生成时间：' + formatTime(data.generated_at);
-    renderKpis(data.overview);
-    renderAccounts(data.accounts);
-    renderTop('topLiked', data.top_lists.liked, 'like');
-    renderTop('topViewed', data.top_lists.viewed, 'view');
-    setupPostFilters(data);
-    setupNoteFilters(data);
+    renderDashboard(data);
   })
   .catch((err) => {
     document.getElementById('generatedAt').textContent = '数据加载失败：' + err.message;
+    document.getElementById('dashboardMode').textContent = '加载失败';
   });

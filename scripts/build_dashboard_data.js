@@ -2,14 +2,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const projectRoot = path.resolve(__dirname, '..');
-const accountsRoot = path.join(projectRoot, 'data', 'x', 'accounts');
-const outputPath = path.join(projectRoot, 'data', 'dashboard', 'dashboard-data.json');
-const notesDraftsRoot = path.join(projectRoot, 'notes', 'drafts');
-const notesBriefsRoot = path.join(projectRoot, 'notes', 'briefs');
-const notesBundlesRoot = path.join(projectRoot, 'notes', 'bundles');
-const notesRunsRoot = path.join(projectRoot, 'notes', 'runs');
-
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
 }
@@ -160,7 +152,14 @@ function normalizeReviewStatus(status) {
   return status || 'draft';
 }
 
-function main() {
+function buildDashboardData(projectRoot = path.resolve(__dirname, '..')) {
+  const accountsRoot = path.join(projectRoot, 'data', 'x', 'accounts');
+  const outputPath = path.join(projectRoot, 'data', 'dashboard', 'dashboard-data.json');
+  const notesDraftsRoot = path.join(projectRoot, 'notes', 'drafts');
+  const notesBriefsRoot = path.join(projectRoot, 'notes', 'briefs');
+  const notesBundlesRoot = path.join(projectRoot, 'notes', 'bundles');
+  const notesRunsRoot = path.join(projectRoot, 'notes', 'runs');
+
   const handles = fs.existsSync(accountsRoot)
     ? fs.readdirSync(accountsRoot).filter((name) => fs.statSync(path.join(accountsRoot, name)).isDirectory())
     : [];
@@ -224,7 +223,21 @@ function main() {
 
   ensureDir(path.dirname(outputPath));
   fs.writeFileSync(outputPath, JSON.stringify(dashboard, null, 2) + '\n', 'utf8');
+  return {
+    outputPath,
+    dashboard
+  };
+}
+
+function main() {
+  const { outputPath } = buildDashboardData();
   console.log(outputPath);
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  buildDashboardData
+};
