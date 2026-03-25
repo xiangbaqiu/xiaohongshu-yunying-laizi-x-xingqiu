@@ -97,11 +97,16 @@ th { color: var(--muted); font-size: 13px; background: #fafbff; position: sticky
   line-height: 1.45;
 }
 .filters .filter-row { display: flex; gap: 10px; flex-wrap: wrap; }
-input, select {
+input, select, textarea {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px 12px;
   background: white;
+}
+textarea {
+  resize: vertical;
+  min-height: 88px;
+  font: inherit;
 }
 .two-col {
   display: grid;
@@ -131,6 +136,31 @@ input, select {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 14px;
+}
+.review-form {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fafbff;
+}
+.review-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.review-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.review-field-wide {
+  grid-column: 1 / -1;
+}
+.review-textarea {
+  line-height: 1.45;
 }
 .review-actions.hint {
   color: var(--muted);
@@ -168,10 +198,28 @@ input, select {
   color: var(--text);
   margin-bottom: 8px;
 }
+.review-annotation-block {
+  background: #fffaf5;
+}
+.annotation-row + .annotation-row {
+  margin-top: 10px;
+}
+.annotation-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.annotation-value {
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
 a { color: var(--brand); text-decoration: none; }
 @media (max-width: 900px) {
   .kpis, .two-col { grid-template-columns: 1fr; }
   .header { flex-direction: column; align-items: flex-start; gap: 8px; }
   .header-status { align-items: flex-start; }
   .action-feedback { text-align: left; }
+  .review-form-grid { grid-template-columns: 1fr; }
 }

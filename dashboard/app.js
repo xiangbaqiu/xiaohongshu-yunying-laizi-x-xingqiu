@@ -91,6 +91,7 @@ const appState = {
     style: '',
     reviewStatus: ''
   },
+  noteForms: {},
   pendingDraftId: null,
   feedback: ''
 };
@@ -103,6 +104,88 @@ function renderModeBadge() {
 
 function renderFeedback() {
   document.getElementById('actionFeedback').textContent = appState.feedback || '';
+}
+
+function formValue(text) {
+  return escapeHtml(text || '');
+}
+
+function getNoteFormState(note) {
+  return appState.noteForms[note.draft_id] || {
+    reviewerNote: note.review_annotation?.reviewer_note || '',
+    editSuggestion: note.review_annotation?.edit_suggestion || '',
+    rejectionReason: note.review_annotation?.rejection_reason || '',
+    operatorIdentity: note.review_annotation?.operator_identity || ''
+  };
+}
+
+function renderReviewAnnotation(note) {
+  const annotation = note.review_annotation;
+  if (!annotation) return '';
+
+  const detailRows = [
+    annotation.reviewer_note ? `<div class="annotation-row"><span class="annotation-label">审核备注</span><div class="annotation-value">${escapeHtml(annotation.reviewer_note)}</div></div>` : '',
+    annotation.edit_suggestion ? `<div class="annotation-row"><span class="annotation-label">修改建议</span><div class="annotation-value">${escapeHtml(annotation.edit_suggestion)}</div></div>` : '',
+    annotation.rejection_reason ? `<div class="annotation-row"><span class="annotation-label">拒绝原因</span><div class="annotation-value">${escapeHtml(annotation.rejection_reason)}</div></div>` : ''
+  ].filter(Boolean).join('');
+
+  return `
+    <div class="detail-block review-annotation-block">
+      <div class="detail-title">最近一次批注</div>
+      <div class="note-meta">操作者：${annotation.operator_identity || '-'} · 时间：${formatTime(annotation.updated_at || note.review_updated_at)}</div>
+      ${detailRows}
+    </div>
+  `;
+}
+
+function renderReviewAnnotationForm(note) {
+  if (!appState.apiAvailable) return '';
+
+  const form = getNoteFormState(note);
+
+  return `
+    <div class="review-form">
+      <div class="review-form-grid">
+        <label class="review-field">
+          <span>操作者</span>
+          <input
+            class="review-input"
+            data-draft-id="${note.draft_id}"
+            data-field="operatorIdentity"
+            placeholder="可选，例如 xiangbaqiu"
+            value="${formValue(form.operatorIdentity)}"
+          />
+        </label>
+        <label class="review-field review-field-wide">
+          <span>审核备注</span>
+          <textarea
+            class="review-input review-textarea"
+            data-draft-id="${note.draft_id}"
+            data-field="reviewerNote"
+            placeholder="记录审核判断或上下文"
+          >${formValue(form.reviewerNote)}</textarea>
+        </label>
+        <label class="review-field">
+          <span>修改建议</span>
+          <textarea
+            class="review-input review-textarea"
+            data-draft-id="${note.draft_id}"
+            data-field="editSuggestion"
+            placeholder="可选，适合 needs_edit"
+          >${formValue(form.editSuggestion)}</textarea>
+        </label>
+        <label class="review-field">
+          <span>拒绝原因</span>
+          <textarea
+            class="review-input review-textarea"
+            data-draft-id="${note.draft_id}"
+            data-field="rejectionReason"
+            placeholder="可选，适合 rejected"
+          >${formValue(form.rejectionReason)}</textarea>
+        </label>
+      </div>
+    </div>
+  `;
 }
 
 function renderReviewActions(note) {
@@ -140,10 +223,12 @@ function renderNotes(notes) {
       <div class="note-card">
         <h3>${escapeHtml((note.title_options && note.title_options[0]) || '未命名草稿')}</h3>
         <div class="note-meta">主题：${note.theme || '-'} · 风格：${note.style || '-'} · 状态：${note.status || 'draft'} · 审核状态：<span class="status-chip">${renderReviewStatus(note.review_status)}</span> · 生成时间：${formatTime(note.created_at)}</div>
-        <div class="note-meta">Draft：${note.draft_id || '-'} · Brief：${note.brief_id || '-'} · Bundle：${note.bundle_id || '-'} · Run：${note.run_id || '-'}</div>
+        <div class="note-meta">Draft：${note.draft_id || '-'} · Brief：${note.brief_id || '-'} · Bundle：${note.bundle_id || '-'} · Run：${note.run_id || '-'} · 批注次数：${note.review_history_count || 0}</div>
         <div class="note-preview">${escapeHtml(String(note.body_markdown || '').slice(0, 300))}${String(note.body_markdown || '').length > 300 ? '...' : ''}</div>
         <div class="note-tags">来源帖子数：${note.source_post_count || 0} · 标签：${(note.hashtags || []).join(' ')}</div>
+        ${renderReviewAnnotationForm(note)}
         ${renderReviewActions(note)}
+        ${renderReviewAnnotation(note)}
         ${note.bundle_preview ? `
           <div class="detail-block">
             <div class="detail-title">Bundle 预览</div>
@@ -210,6 +295,18 @@ function renderNotesFromState() {
     return okTheme && okStyle && okReviewStatus;
   });
   renderNotes(filtered);
+}
+
+function syncNoteForms(data) {
+  appState.noteForms = Object.fromEntries((data.notes || []).map((note) => [
+    note.draft_id,
+    {
+      reviewerNote: note.review_annotation?.reviewer_note || '',
+      editSuggestion: note.review_annotation?.edit_suggestion || '',
+      rejectionReason: note.review_annotation?.rejection_reason || '',
+      operatorIdentity: note.review_annotation?.operator_identity || ''
+    }
+  ]));
 }
 
 function setupPostFilters(data) {
@@ -311,6 +408,7 @@ async function loadDashboardData() {
 
 function renderDashboard(data) {
   appState.data = data;
+  syncNoteForms(data);
   document.getElementById('generatedAt').textContent = '数据生成时间：' + formatTime(data.generated_at);
   renderModeBadge();
   renderFeedback();
@@ -332,7 +430,13 @@ async function updateReviewStatus(draftId, reviewStatus) {
     const response = await fetch(`/api/drafts/${encodeURIComponent(draftId)}/review-status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ review_status: reviewStatus })
+      body: JSON.stringify({
+        review_status: reviewStatus,
+        reviewer_note: appState.noteForms[draftId]?.reviewerNote || '',
+        edit_suggestion: appState.noteForms[draftId]?.editSuggestion || '',
+        rejection_reason: appState.noteForms[draftId]?.rejectionReason || '',
+        operator_identity: appState.noteForms[draftId]?.operatorIdentity || ''
+      })
     });
     const payload = await response.json();
     if (!response.ok || !payload.ok) {
@@ -357,6 +461,18 @@ document.getElementById('notesList').addEventListener('click', async (event) => 
   if (!button) return;
 
   await updateReviewStatus(button.dataset.draftId, button.dataset.reviewStatus);
+});
+
+document.getElementById('notesList').addEventListener('input', (event) => {
+  const input = event.target.closest('.review-input');
+  if (!input) return;
+
+  const draftId = input.dataset.draftId;
+  const field = input.dataset.field;
+  appState.noteForms[draftId] = {
+    ...(appState.noteForms[draftId] || {}),
+    [field]: input.value
+  };
 });
 
 loadDashboardData()

@@ -19,7 +19,7 @@ function writeText(filePath, content) {
   fs.writeFileSync(filePath, content);
 }
 
-test('dashboard server updates review status and rebuilds dashboard data', async () => {
+test('dashboard server updates review status, annotations, and rebuilds dashboard data', async () => {
   const tempRoot = makeTempProject();
   writeText(path.join(tempRoot, 'dashboard', 'index.html'), '<!doctype html><title>ok</title>');
   writeText(path.join(tempRoot, 'dashboard', 'app.js'), 'console.log("ok");');
@@ -46,7 +46,13 @@ test('dashboard server updates review status and rebuilds dashboard data', async
     const response = await fetch(`http://127.0.0.1:${port}/api/drafts/draft-1/review-status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ review_status: 'reviewing' })
+      body: JSON.stringify({
+        review_status: 'reviewing',
+        reviewer_note: '需要补一个更强的开头',
+        edit_suggestion: '把第二段再收短一点',
+        rejection_reason: '',
+        operator_identity: 'xiangbaqiu'
+      })
     });
     const payload = await response.json();
 
@@ -58,7 +64,12 @@ test('dashboard server updates review status and rebuilds dashboard data', async
     const dashboard = JSON.parse(fs.readFileSync(path.join(tempRoot, 'data', 'dashboard', 'dashboard-data.json'), 'utf8'));
 
     assert.equal(persisted.review_status, 'reviewing');
+    assert.equal(persisted.review_annotation.reviewer_note, '需要补一个更强的开头');
+    assert.equal(persisted.review_annotation.edit_suggestion, '把第二段再收短一点');
+    assert.equal(persisted.review_annotation.operator_identity, 'xiangbaqiu');
     assert.equal(dashboard.notes[0].review_status, 'reviewing');
+    assert.equal(dashboard.notes[0].review_annotation.reviewer_note, '需要补一个更强的开头');
+    assert.equal(dashboard.notes[0].review_updated_at, persisted.review_updated_at);
     assert.ok(dashboard.filters_meta.review_statuses.includes('reviewing'));
   } finally {
     await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
