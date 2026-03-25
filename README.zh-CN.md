@@ -135,9 +135,25 @@ node --test
 
 ### 7）本地打开 dashboard
 
+只读模式：
+
 ```bash
 python3 -m http.server 8008
 ```
+
+然后访问：
+
+`http://127.0.0.1:8008/dashboard/index.html`
+
+如果要在 dashboard 中直接做审核状态流转，请使用可写模式：
+
+```bash
+node scripts/dashboard_server.js
+```
+
+然后访问：
+
+`http://127.0.0.1:8008/dashboard/index.html`
 
 然后访问：
 
